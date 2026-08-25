@@ -122,10 +122,16 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   }
 
   const source = new TextDecoder().decode(bytes)
-  const loaded = options.security?.enabled
-    ? await PDFDocument.load(await decryptPdfForVerification(bytes))
-    : await PDFDocument.load(bytes)
-  if (loaded.getPageCount() !== pageCount || !source.includes("/Subtype /Image") || (options.security?.enabled && !source.includes("/Encrypt"))) {
+  const verificationBytes = options.security?.enabled ? await decryptPdfForVerification(bytes) : bytes
+  const verificationSource = new TextDecoder().decode(verificationBytes)
+  const loaded = await PDFDocument.load(verificationBytes)
+  if (
+    !source.startsWith("%PDF-") ||
+    loaded.getPageCount() !== pageCount ||
+    !verificationSource.includes("/Subtype /Image") ||
+    !verificationSource.includes(PDF_SOURCE_URL) ||
+    (options.security?.enabled && !source.includes("/Encrypt"))
+  ) {
     throw new Error("El PDF generado no pasó la verificación estructural.")
   }
   if (options.mode === "size" && bytes.length !== options.targetBytes) throw new Error("El PDF no tiene el tamaño exacto solicitado.")

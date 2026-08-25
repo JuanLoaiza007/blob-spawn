@@ -67,6 +67,14 @@ La UI usará los diez checkboxes solicitados como restricciones activables, todo
 
 La configuración resultante debe conservar tanto el estado solicitado por la UI como las capacidades efectivamente emitidas, para que la verificación pueda detectar perfiles imposibles o degradaciones no documentadas.
 
+### Matriz observada con qpdf y Nitro Pro
+
+La inspección de fixtures generados con una restricción individual mostró que qpdf confirma las capacidades estándar siguientes: impresión produce `P = -2056`; cambio de documento `P = -12`; copia `P = -20`; comentarios `P = -36`; formularios y firma `P = -260`; y ensamblaje, extracción de páginas y plantillas `P = -1028`. Accesibilidad conserva `P = -4` y permanece permitida con `R = 6`, como exige el comportamiento moderno del estándar.
+
+Nitro Pro coincide con impresión, cambio de documento, comentarios y copia. Nitro muestra permitidas accesibilidad, ensamblaje, extracción de páginas, plantillas, formularios y firma. Estas diferencias se aceptan como interpretación específica del lector: extracción de páginas, plantillas y firma no tienen bits independientes universales, y el fixture no contiene campos de formulario, firmas ni páginas de plantilla reales. qpdf y el Standard Security Handler son la referencia para el perfil emitido; Nitro se conserva como referencia de compatibilidad, no como prueba de que esos bits estándar no se hayan aplicado.
+
+La matriz automatizada deberá conservar estos resultados como criterios de regresión: perfil base `P = -4`; impresión `-2056`; cambio de documento `-12`; comentarios `-36`; copia `-20`; formularios y firma `-260`; ensamblaje, extracción de páginas y plantillas `-1028`; y todas las restricciones representables `-3392`. Accesibilidad debe permanecer en `P = -4` y permitida con `R = 6`, aunque su checkbox esté activo.
+
 ### Credenciales fijas y apertura del documento
 
 Cuando la seguridad está activa se usarán `owner-password` y `user-password` exactamente como valores definidos por el producto. Se mostrarán como texto informativo no editable. No se guardarán en almacenamiento local, metadatos PDF ni servidor.

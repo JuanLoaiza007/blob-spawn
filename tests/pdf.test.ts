@@ -3,7 +3,7 @@ import { PDFArray, PDFDocument, PDFStream } from "pdf-lib"
 
 import { createPdfTestImage } from "../lib/generators/pdf-image"
 import { PDF_SOURCE_URL, estimatePdf, generatePdf } from "../lib/generators/pdf"
-import { DEFAULT_PDF_SECURITY, getPdfSecurityArguments, type PdfSecurityRestrictions } from "../lib/generators/pdf-security"
+import { DEFAULT_PDF_SECURITY, getPdfSecurityArguments, getPdfSecurityWarnings, type PdfSecurityRestrictions } from "../lib/generators/pdf-security"
 import { validatePdfPageCount, validatePdfText } from "../lib/generators/validation"
 
 async function bytesOf(blob: Blob) {
@@ -116,6 +116,32 @@ describe("PDF security configuration", () => {
       "--annotate=n",
       "--form=n",
     ])
+  })
+
+  it.each([
+    ["printing", "--print=none"],
+    ["changingDocument", "--modify-other=n"],
+    ["documentAssembly", "--assemble=n"],
+    ["contentCopying", "--extract=n"],
+    ["accessibilityExtraction", "--accessibility=n"],
+    ["pageExtraction", "--assemble=n"],
+    ["commenting", "--annotate=n"],
+    ["formFilling", "--form=n"],
+    ["signing", "--form=n"],
+    ["templatePages", "--assemble=n"],
+  ] as const)("maps %s to its standard qpdf capability", (name, argument) => {
+    const restrictions = { ...DEFAULT_PDF_SECURITY.restrictions, [name]: true }
+    expect(getPdfSecurityArguments(restrictions)).toContain(argument)
+  })
+
+  it("explains accessibility and grouped capability limitations", () => {
+    const warnings = getPdfSecurityWarnings({
+      ...DEFAULT_PDF_SECURITY.restrictions,
+      accessibilityExtraction: true,
+      signing: true,
+    })
+    expect(warnings).toContain("La extracción para accesibilidad no puede restringirse de forma fiable en PDFs modernos.")
+    expect(warnings).toContain("Algunas capacidades comparten permisos PDF y pueden variar según el lector.")
   })
 
   it("rejects exact-size mode when security is enabled", async () => {
