@@ -265,7 +265,7 @@ export default function Home() {
               <span className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary">{selectedType.extension}</span>
             </div>
 
-              {(!isPdf || pdfMode === "size") && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
+              {!isPdf && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
                 <div className="space-y-2">
                  <Label htmlFor="size">{isPdf ? "Tamaño final" : "Tamaño exacto"}</Label>
                 <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
@@ -291,11 +291,12 @@ export default function Home() {
               <p className="text-xs text-muted-foreground">Solo letras, letras acentuadas, números, guion medio y guion bajo. La extensión se añade automáticamente.</p>
             </div>
 
-            <div className="mt-5 space-y-5">
-              {selectedType.fields.map((field) => (
-                <div className="space-y-2" key={field.name}>
-                  <Label htmlFor={field.name}>{field.label}</Label>
-                  {field.name === "pageCount" && pdfMode !== "pages" ? null : field.kind === "select" ? (
+              <div className="mt-5 space-y-5">
+               {selectedType.fields.map((field) => (
+                 <div key={field.name} className="contents">
+                 {!(field.name === "pageCount" && pdfMode !== "pages") && <div className="space-y-2">
+                   <Label htmlFor={field.name}>{field.label}</Label>
+                  {field.kind === "select" ? (
                     <Select value={form.fields[field.name]} onValueChange={(value) => value && updateField(field.name, value)}>
                       <SelectTrigger id={field.name}><SelectValue /></SelectTrigger>
                       <SelectContent>{field.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
@@ -306,9 +307,27 @@ export default function Home() {
                     <Textarea id={field.name} value={form.fields[field.name]} onChange={(event) => updateField(field.name, event.target.value)} />
                   )}
                   {field.description && !(field.name === "pageCount" && pdfMode !== "pages") && <p className="text-xs text-muted-foreground">{field.description}</p>}
-                  {field.name === "pdfText" && <p className="text-right text-xs text-muted-foreground">{(form.fields.pdfText ?? "").length}/{GENERATOR_LIMITS.pdfMaxTextCharacters} caracteres</p>}
-                </div>
-              ))}
+                   {field.name === "pdfText" && <p className="text-right text-xs text-muted-foreground">{(form.fields.pdfText ?? "").length}/{GENERATOR_LIMITS.pdfMaxTextCharacters} caracteres</p>}
+                 </div>}
+                 {isPdf && pdfMode === "size" && field.name === "pdfMode" && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
+                   <div className="space-y-2">
+                     <Label htmlFor="size">Tamaño final</Label>
+                     <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
+                     <p className="text-xs leading-5 text-muted-foreground">Usamos MB decimales: 1 MB = 1.000.000 bytes.</p>
+                   </div>
+                   <div className="space-y-2 sm:min-w-32">
+                     <Label>Unidad</Label>
+                     <Select value={form.unit} onValueChange={(value) => value && setForm({ ...form, unit: value as FormState["unit"] })}>
+                       <SelectTrigger><SelectValue /></SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="KB">KB</SelectItem>
+                         <SelectItem value="MB">MB</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                 </div>}
+                 </div>
+               ))}
             </div>
 
             <div className="mt-8 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">

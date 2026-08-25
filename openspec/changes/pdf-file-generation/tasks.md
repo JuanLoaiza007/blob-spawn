@@ -29,7 +29,7 @@
 ## 5. Integración del formulario y descarga
 
 - [x] 5.1 Registrar `.pdf`, su MIME, alias, valores iniciales y campos específicos en el catálogo sin alterar la búsqueda ni los formularios de TXT, JSON y CSV; verificar selección por `.pdf`, `pdf` y alias.
-- [x] 5.2 Integrar el formulario PDF en la pantalla principal con un control único de modo y campos mutuamente excluyentes; verificar que cambiar de modo deshabilite o limpie el objetivo anterior y que una configuración ambigua sea rechazada.
+- [x] 5.2 Integrar el formulario PDF en la pantalla principal con un control único de modo, el control de páginas o tamaño inmediatamente después y campos mutuamente excluyentes; verificar que cambiar de modo deshabilite o limpie el objetivo anterior y que una configuración ambigua sea rechazada.
 - [x] 5.3 Mostrar tamaño estimado, objetivo seleccionado, páginas esperadas cuando estén disponibles y límites de texto con mensajes que distingan estimación de resultado exacto; verificar actualización al editar los parámetros.
 - [x] 5.4 Conectar la generación PDF al flujo local de Blob, nombre base y extensión automática `.pdf`; verificar descarga local, liberación de URL temporal, ausencia de peticiones de red y estados idle/generating/success/error.
 - [x] 5.5 Añadir confirmación para salidas grandes basada en objetivo o estimación; verificar que no se inicie generación antes de confirmar, que cancelar vuelva al formulario y que no haya dobles generaciones.

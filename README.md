@@ -18,7 +18,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## PDF output
 
-BlobSpawn can generate local dummy PDFs containing a raster image pattern and custom plain text. PDFs support two mutually exclusive modes: a configured number of pages or an exact final byte size. The interface shows an estimated size before generation; final-size mode uses valid PDF padding and rejects targets smaller than the document's structural minimum.
+BlobSpawn can generate local dummy PDFs containing a raster image pattern and custom plain text. PDFs support two mutually exclusive modes: a configured number of pages or an exact final byte size. The form asks for the mode first, immediately followed by the active page-count or final-size control, then the test text. The interface shows an estimated size before generation; final-size mode uses valid PDF padding and rejects targets smaller than the document's structural minimum.
 
 Each page includes `blob-spawn.vercel.app` in the lower-right area below the content frame. The label is a clickable PDF hyperlink to `https://blob-spawn.vercel.app`. This URL is fixed by the application and cannot be changed through the custom text field.
 

@@ -46,6 +46,8 @@ PdfOptions
 
 Los campos comunes serán texto, nombre base y configuración fija de página. La UI mostrará ambos modos en un selector tipo radio o tabs, pero solo habilitará el conjunto de controles activo. El generador y el validador comprobarán también la exclusividad para no confiar únicamente en el estado visual.
 
+El orden visual del formulario será deliberado: primero el selector `Generar por`; inmediatamente después aparecerá `Cantidad de páginas` cuando el modo sea `pages`, o `Tamaño final` y su unidad cuando el modo sea `size`; el texto de prueba aparecerá después de esos controles. Los campos inactivos no conservarán etiquetas visibles ni controles interactivos.
+
 Se usará A4 vertical como configuración inicial fija para reducir variables y hacer comparables las estimaciones. El patrón visual y el layout serán constantes en esta capacidad; tamaño de página, orientación y temas serán extensiones posteriores.
 
 ### Librería candidata y spike técnico obligatorio

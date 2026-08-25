@@ -19,6 +19,7 @@ The system SHALL add `.pdf` to the searchable file-type catalog with a visible n
 ### Requirement: Mutually exclusive PDF output modes
 
 The system SHALL expose page-count mode and final-size mode in the same PDF form, and SHALL require exactly one mode to be active for each generation. Activating one mode SHALL disable or clear the controls belonging exclusively to the other mode, and the generator SHALL reject an ambiguous configuration rather than silently choosing one.
+The form SHALL ask for the output mode before mode-specific sizing, and SHALL place the active page-count or final-size control immediately after the mode selector; the text field SHALL follow those sizing controls.
 
 #### Scenario: Configure by page count
 - **WHEN** the user selects page-count mode and enters a valid number of pages
@@ -35,6 +36,14 @@ The system SHALL expose page-count mode and final-size mode in the same PDF form
 #### Scenario: Both modes are submitted
 - **WHEN** a malformed or stale configuration contains active values for both modes
 - **THEN** generation is prevented with a validation error instead of prioritizing one value implicitly
+
+#### Scenario: Page-count field follows mode selector
+- **WHEN** the user selects page-count mode
+- **THEN** the quantity of pages is the first mode-specific field shown immediately after the mode selector and the final-size controls are not shown
+
+#### Scenario: Final-size field follows mode selector
+- **WHEN** the user selects final-size mode
+- **THEN** the final-size controls are shown immediately after the mode selector and the page-count label and controls are not shown
 
 ### Requirement: Configure and validate PDF pages
 
