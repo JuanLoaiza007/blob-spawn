@@ -99,6 +99,8 @@ export function generateTextFile(options: TextGeneratorOptions, config: Generato
     case "csv":
       bytes = generateCsv(options.targetBytes, options.csvHeader ?? "data")
       break
+    default:
+      throw new Error("Este tipo de archivo no usa el generador de texto.")
   }
 
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: config.mimeType })

@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { FILE_TYPES, GENERATOR_LIMITS, SIZE_UNITS, searchFileTypes } from "@/lib/generators/config"
+import { estimatePdf, generatePdf } from "@/lib/generators/pdf"
 import { generateTextFile } from "@/lib/generators/text"
-import { sizeToBytes, validateTargetSize } from "@/lib/generators/validation"
+import { sizeToBytes, validatePdfPageCount, validatePdfText, validateTargetSize } from "@/lib/generators/validation"
 
 type FormState = {
   size: string
@@ -50,10 +51,15 @@ export default function Home() {
   const [message, setMessage] = useState("")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
+  const [pdfEstimate, setPdfEstimate] = useState<{ estimatedBytes: number; pageCount: number } | null>(null)
 
   const filteredTypes = useMemo(() => searchFileTypes(searchQuery), [searchQuery])
+  const isPdf = selectedType.type === "pdf"
+  const pdfMode = form.fields.pdfMode ?? "pages"
   const targetBytes = sizeToBytes(form.size, form.unit) ?? 0
-  const displayedSize = Number.isFinite(targetBytes) && targetBytes > 0 ? formatBytes(targetBytes) : "Tamaño pendiente"
+  const displayedSize = isPdf && pdfMode === "pages"
+    ? pdfEstimate ? `${pdfEstimate.pageCount} páginas · ~${formatBytes(pdfEstimate.estimatedBytes)}` : "Estimación pendiente"
+    : Number.isFinite(targetBytes) && targetBytes > 0 ? formatBytes(targetBytes) : "Tamaño pendiente"
 
   useEffect(() => {
     function handleOutsidePointerDown(event: PointerEvent) {
@@ -67,6 +73,21 @@ export default function Home() {
     return () => document.removeEventListener("pointerdown", handleOutsidePointerDown)
   }, [selectedType])
 
+  useEffect(() => {
+    if (!isPdf) return
+
+    let cancelled = false
+    const options = pdfMode === "size"
+      ? { mode: "size" as const, targetBytes, text: form.fields.pdfText ?? "" }
+      : { mode: "pages" as const, pageCount: Number(form.fields.pageCount), text: form.fields.pdfText ?? "" }
+    void estimatePdf(options).then((estimate) => {
+      if (!cancelled) setPdfEstimate(estimate)
+    }).catch(() => {
+      if (!cancelled) setPdfEstimate(null)
+    })
+    return () => { cancelled = true }
+  }, [form.fields.pageCount, form.fields.pdfText, isPdf, pdfMode, targetBytes])
+
   function selectType(type: typeof initialType) {
     setSelectedType(type)
     setSearchQuery(type.displayName)
@@ -76,10 +97,23 @@ export default function Home() {
   }
 
   function updateField(name: string, value: string) {
-    setForm((current) => ({ ...current, fields: { ...current.fields, [name]: value } }))
+    setForm((current) => {
+      const fields = { ...current.fields, [name]: value }
+      if (name === "pdfMode" && value === "size") fields.pageCount = ""
+      return { ...current, fields }
+    })
   }
 
   function validate(currentForm: FormState) {
+    if (selectedType.type === "pdf") {
+      const mode = currentForm.fields.pdfMode
+      if (mode !== "pages" && mode !== "size") return "Selecciona un modo de generación para el PDF."
+      const textError = validatePdfText(currentForm.fields.pdfText ?? "")
+      if (textError) return textError
+      if (mode === "pages") return validatePdfPageCount(currentForm.fields.pageCount ?? "")
+      return validateTargetSize(currentForm.size, currentForm.unit)
+    }
+
     const bytes = sizeToBytes(currentForm.size, currentForm.unit)
     const filename = currentForm.filename.trim()
 
@@ -99,7 +133,9 @@ export default function Home() {
       return
     }
 
-    const bytes = Number(currentForm.size) * SIZE_UNITS[currentForm.unit]
+    const bytes = selectedType.type === "pdf" && currentForm.fields.pdfMode === "pages"
+      ? pdfEstimate?.estimatedBytes ?? 0
+      : Number(currentForm.size) * SIZE_UNITS[currentForm.unit]
     if (bytes > GENERATOR_LIMITS.largeFileWarningBytes) {
       setLargeFileConfig(currentForm)
       return
@@ -114,14 +150,14 @@ export default function Home() {
     setMessage("")
 
     try {
-      const result = generateTextFile(
-        {
-          type: selectedType.type,
-          targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit],
-          ...currentForm.fields,
-        },
-        selectedType,
-      )
+      const result = selectedType.type === "pdf"
+        ? await generatePdf(currentForm.fields.pdfMode === "size"
+          ? { mode: "size", targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit], text: currentForm.fields.pdfText ?? "" }
+          : { mode: "pages", pageCount: Number(currentForm.fields.pageCount), text: currentForm.fields.pdfText ?? "" })
+        : generateTextFile(
+            { type: selectedType.type, targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit], ...currentForm.fields },
+            selectedType,
+          )
       const objectUrl = URL.createObjectURL(result.blob)
       const link = document.createElement("a")
       link.href = objectUrl
@@ -129,7 +165,8 @@ export default function Home() {
       link.click()
       URL.revokeObjectURL(objectUrl)
       setStatus("success")
-      setMessage(`${link.download} generado con ${formatBytes(result.blob.size)} exactos.`)
+      const pageMessage = selectedType.type === "pdf" && "pageCount" in result ? ` y ${result.pageCount} páginas` : ""
+      setMessage(`${link.download} generado con ${formatBytes(result.blob.size)} exactos${pageMessage}.`)
     } catch (error) {
       setStatus("error")
       setMessage(error instanceof Error ? error.message : "No se pudo generar el archivo.")
@@ -228,15 +265,15 @@ export default function Home() {
               <span className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary">{selectedType.extension}</span>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
-              <div className="space-y-2">
-                <Label htmlFor="size">Tamaño exacto</Label>
+              {!isPdf && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
+                <div className="space-y-2">
+                 <Label htmlFor="size">{isPdf ? "Tamaño final" : "Tamaño exacto"}</Label>
                 <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Usamos MB decimales: 1 MB = 1.000.000 bytes. Por ejemplo, 10 MB pueden aparecer en Linux como aproximadamente 9,5 MiB.
+                   Usamos MB decimales: 1 MB = 1.000.000 bytes. Por ejemplo, 10 MB pueden aparecer en Linux como aproximadamente 9,5 MiB.
                 </p>
-              </div>
-              <div className="space-y-2 sm:min-w-32">
+                </div>
+                <div className="space-y-2 sm:min-w-32">
                 <Label>Unidad</Label>
                     <Select value={form.unit} onValueChange={(value) => value && setForm({ ...form, unit: value as FormState["unit"] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -245,8 +282,8 @@ export default function Home() {
                     <SelectItem value="MB">MB</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+                </div>
+              </div>}
 
             <div className="mt-5 space-y-2">
               <Label htmlFor="filename">Nombre del archivo</Label>
@@ -254,21 +291,43 @@ export default function Home() {
               <p className="text-xs text-muted-foreground">Solo letras, letras acentuadas, números, guion medio y guion bajo. La extensión se añade automáticamente.</p>
             </div>
 
-            <div className="mt-5 space-y-5">
-              {selectedType.fields.map((field) => (
-                <div className="space-y-2" key={field.name}>
-                  <Label htmlFor={field.name}>{field.label}</Label>
+              <div className="mt-5 space-y-5">
+               {selectedType.fields.map((field) => (
+                 <div key={field.name} className="contents">
+                 {!(field.name === "pageCount" && pdfMode !== "pages") && <div className="space-y-2">
+                   <Label htmlFor={field.name}>{field.label}</Label>
                   {field.kind === "select" ? (
                     <Select value={form.fields[field.name]} onValueChange={(value) => value && updateField(field.name, value)}>
                       <SelectTrigger id={field.name}><SelectValue /></SelectTrigger>
                       <SelectContent>{field.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
                     </Select>
+                  ) : field.kind === "input" ? (
+                    <Input id={field.name} type={field.inputType ?? "text"} value={form.fields[field.name]} onChange={(event) => updateField(field.name, event.target.value)} />
                   ) : (
                     <Textarea id={field.name} value={form.fields[field.name]} onChange={(event) => updateField(field.name, event.target.value)} />
                   )}
-                  {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
-                </div>
-              ))}
+                  {field.description && !(field.name === "pageCount" && pdfMode !== "pages") && <p className="text-xs text-muted-foreground">{field.description}</p>}
+                   {field.name === "pdfText" && <p className="text-right text-xs text-muted-foreground">{(form.fields.pdfText ?? "").length}/{GENERATOR_LIMITS.pdfMaxTextCharacters} caracteres</p>}
+                 </div>}
+                 {isPdf && pdfMode === "size" && field.name === "pdfMode" && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
+                   <div className="space-y-2">
+                     <Label htmlFor="size">Tamaño final</Label>
+                     <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
+                     <p className="text-xs leading-5 text-muted-foreground">Usamos MB decimales: 1 MB = 1.000.000 bytes.</p>
+                   </div>
+                   <div className="space-y-2 sm:min-w-32">
+                     <Label>Unidad</Label>
+                     <Select value={form.unit} onValueChange={(value) => value && setForm({ ...form, unit: value as FormState["unit"] })}>
+                       <SelectTrigger><SelectValue /></SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="KB">KB</SelectItem>
+                         <SelectItem value="MB">MB</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                 </div>}
+                 </div>
+               ))}
             </div>
 
             <div className="mt-8 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
