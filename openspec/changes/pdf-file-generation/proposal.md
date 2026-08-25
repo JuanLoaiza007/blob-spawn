@@ -7,6 +7,7 @@ BlobSpawn necesita generar PDFs dummy para probar formularios que aceptan docume
 - Añadir `.pdf` al catálogo de formatos seleccionables y conservar el flujo existente de nombre, generación local, descarga y advertencia para archivos grandes.
 - Añadir un único formulario de configuración PDF con dos modos mutuamente excluyentes: cantidad de páginas o tamaño final en bytes.
 - Generar en cada página un patrón de imagen rasterizado y texto plano personalizado para comprobar ambos contenidos en sistemas consumidores de PDFs.
+- Mostrar en cada página la URL fija `blob-spawn.vercel.app` fuera del marco inferior derecho y hacerla clicable hacia `https://blob-spawn.vercel.app`, sin permitir que el texto del usuario controle el destino.
 - Mostrar una estimación del tamaño probable del documento según la cantidad de páginas y la configuración visual, distinguiéndola del objetivo exacto del modo por tamaño.
 - Limitar, validar y normalizar el texto personalizado antes de incorporarlo al PDF; tratarlo siempre como texto literal, sin HTML, Markdown, scripts, enlaces ni plantillas ejecutables.
 - Validar la cantidad de páginas, el tamaño final, el tamaño mínimo estructural del PDF y los límites operativos de memoria y generación.

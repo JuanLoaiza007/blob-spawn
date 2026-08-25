@@ -151,3 +151,19 @@ The system SHALL generate the PDF entirely in the browser, without sending confi
 #### Scenario: Large PDF confirmation
 - **WHEN** the configured or estimated output exceeds the application's large-file warning threshold
 - **THEN** the system requires explicit confirmation before starting generation and explains the possible memory and browser-performance impact
+
+### Requirement: Include a source hyperlink outside the page frame
+
+The system SHALL render `blob-spawn.vercel.app` in the lower-right area of every PDF page, below and outside the visible page frame, and SHALL associate that visible label with a hyperlink annotation targeting exactly `https://blob-spawn.vercel.app`.
+
+#### Scenario: Source URL is visible
+- **WHEN** the user generates any valid PDF
+- **THEN** every page displays `blob-spawn.vercel.app` in the lower-right area outside the frame
+
+#### Scenario: Source URL is clickable
+- **WHEN** the user activates the visible source URL in a PDF reader
+- **THEN** the reader follows the HTTPS destination `https://blob-spawn.vercel.app`
+
+#### Scenario: Source URL is not user-controlled
+- **WHEN** the user supplies custom PDF text containing another URL or PDF action syntax
+- **THEN** only the fixed application source hyperlink exists and the custom text does not alter its destination

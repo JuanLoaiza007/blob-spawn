@@ -8,9 +8,12 @@ export const GENERATOR_LIMITS = {
   maxInputBytes: 2048 * SIZE_UNITS.MB,
   maxApplicationBytes: 2_000_000_000,
   largeFileWarningBytes: 500 * SIZE_UNITS.MB,
+  pdfMaxPages: 1_000,
+  pdfMaxTextCharacters: 500,
+  pdfMaxTextBytes: 2_000,
 } as const
 
-export type FileType = "txt" | "json" | "csv"
+export type FileType = "txt" | "json" | "csv" | "pdf"
 
 export type FileField =
   | {
@@ -25,6 +28,13 @@ export type FileField =
       name: string
       label: string
       description?: string
+    }
+  | {
+      kind: "input"
+      name: string
+      label: string
+      description?: string
+      inputType?: "text" | "number"
     }
 
 export type GeneratorConfig = {
@@ -89,7 +99,41 @@ export const FILE_TYPES: GeneratorConfig[] = [
     ],
     defaults: { csvHeader: "data" },
   },
+  {
+    type: "pdf",
+    extension: ".pdf",
+    mimeType: "application/pdf",
+    displayName: "PDF",
+    aliases: ["portable document format", "documento pdf", "documento portable"],
+    fields: [
+      {
+        kind: "select",
+        name: "pdfMode",
+        label: "Generar por",
+        options: [
+          { value: "pages", label: "Cantidad de páginas" },
+          { value: "size", label: "Tamaño final" },
+        ],
+      },
+      {
+        kind: "input",
+        name: "pageCount",
+        label: "Cantidad de páginas",
+        inputType: "number",
+        description: "Entre 1 y 1.000 páginas. Cada página contiene una imagen y texto.",
+      },
+      {
+        kind: "textarea",
+        name: "pdfText",
+        label: "Texto de prueba",
+        description: "Texto plano, máximo 500 caracteres y 2.000 bytes UTF-8.",
+      },
+    ],
+    defaults: { pdfMode: "pages", pageCount: "1", pdfText: "BlobSpawn PDF test" },
+  },
 ]
+
+export const TEXT_FILE_TYPES = FILE_TYPES.filter(({ type }) => type !== "pdf")
 
 const normalizeSearch = (value: string) =>
   value

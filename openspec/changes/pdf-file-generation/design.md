@@ -92,6 +92,10 @@ La generación se ejecutará fuera del estado React, bloqueará acciones duplica
 
 Las pruebas deberán inspeccionar el resultado con las capacidades disponibles de la librería y, para los casos de integración, abrir o parsear el PDF con un lector/validador compatible. Buscar únicamente cadenas en el Blob no será suficiente para demostrar que existen objetos de imagen, páginas y texto válidos.
 
+### Hipervínculo de origen
+
+Cada página dibujará la etiqueta fija `blob-spawn.vercel.app` en la franja inferior derecha, por debajo del marco de contenido, y añadirá una anotación `Link` con acción `URI` sobre las mismas coordenadas. El destino será la constante fija `https://blob-spawn.vercel.app`; no se derivará del texto de prueba ni de metadatos. La anotación se añadirá como objeto PDF real para que lectores comunes la presenten como enlace clicable.
+
 ## Risks / Trade-offs
 
 - **[Riesgo]** La librería candidata puede crear PDFs válidos pero no exponer una forma estable de ajustar un stream al byte exacto. **Mitigación:** spike obligatorio antes del formulario; fallback a un serializador determinista o reducción explícita del alcance antes de implementar.

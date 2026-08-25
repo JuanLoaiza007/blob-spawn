@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { FILE_TYPES, getFilename, searchFileTypes } from "../lib/generators/config"
+import { FILE_TYPES, TEXT_FILE_TYPES, getFilename, searchFileTypes } from "../lib/generators/config"
 import { generateTextFile } from "../lib/generators/text"
 import { sizeToBytes, validateTargetSize } from "../lib/generators/validation"
 
@@ -37,7 +37,7 @@ describe("filename generation", () => {
 })
 
 describe("text file generation", () => {
-  it.each(FILE_TYPES)("generates an exact valid .$type file", async (fileType) => {
+  it.each(TEXT_FILE_TYPES)("generates an exact valid .$type file", async (fileType) => {
     const result = generateTextFile(
       {
         type: fileType.type,
