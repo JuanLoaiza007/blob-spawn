@@ -2,11 +2,12 @@ import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib"
 
 import { GENERATOR_LIMITS, SIZE_UNITS } from "./config"
 import { createPdfTestImage } from "./pdf-image"
+import { applyPdfSecurity, decryptPdfForVerification, type PdfSecurityOptions } from "./pdf-security"
 import { normalizePdfText, validatePdfPageCount, validatePdfText } from "./validation"
 
 export type PdfOptions =
-  | { mode: "pages"; pageCount: number; text: string }
-  | { mode: "size"; targetBytes: number; text: string }
+  | { mode: "pages"; pageCount: number; text: string; security?: PdfSecurityOptions }
+  | { mode: "size"; targetBytes: number; text: string; security?: PdfSecurityOptions }
 
 export type PdfResult = {
   blob: Blob
@@ -88,12 +89,16 @@ async function estimateOnePage(text: string) {
 export async function estimatePdf(options: PdfOptions) {
   const text = ensureText(options.text)
   const onePage = await estimateOnePage(text)
-  if (options.mode === "pages") return { estimatedBytes: onePage * options.pageCount, pageCount: options.pageCount }
+  const securityOverhead = options.security?.enabled ? 2_000 : 0
+  if (options.mode === "pages") return { estimatedBytes: onePage * options.pageCount + securityOverhead, pageCount: options.pageCount }
   return { estimatedBytes: options.targetBytes, pageCount: Math.max(1, Math.min(GENERATOR_LIMITS.pdfMaxPages, Math.floor(options.targetBytes / onePage))) }
 }
 
 export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   const text = ensureText(options.text)
+  if (options.security?.enabled && options.mode === "size") {
+    throw new Error("La seguridad PDF aún no admite el modo de tamaño exacto.")
+  }
   if (options.mode === "pages") {
     const pageError = validatePdfPageCount(String(options.pageCount))
     if (pageError) throw new Error(pageError)
@@ -106,6 +111,7 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   let bytes: Uint8Array
   if (options.mode === "pages") {
     bytes = await serialize(pageCount, text)
+    if (options.security?.enabled) bytes = await applyPdfSecurity(bytes, options.security.restrictions)
   } else {
     while (pageCount > 1) {
       const base = await serialize(pageCount, text)
@@ -115,8 +121,17 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
     bytes = await exactSize(pageCount, text, options.targetBytes)
   }
 
-  const loaded = await PDFDocument.load(bytes)
-  if (loaded.getPageCount() !== pageCount || !new TextDecoder().decode(bytes).includes("/Subtype /Image")) {
+  const source = new TextDecoder().decode(bytes)
+  const verificationBytes = options.security?.enabled ? await decryptPdfForVerification(bytes) : bytes
+  const verificationSource = new TextDecoder().decode(verificationBytes)
+  const loaded = await PDFDocument.load(verificationBytes)
+  if (
+    !source.startsWith("%PDF-") ||
+    loaded.getPageCount() !== pageCount ||
+    !verificationSource.includes("/Subtype /Image") ||
+    !verificationSource.includes(PDF_SOURCE_URL) ||
+    (options.security?.enabled && !source.includes("/Encrypt"))
+  ) {
     throw new Error("El PDF generado no pasó la verificación estructural.")
   }
   if (options.mode === "size" && bytes.length !== options.targetBytes) throw new Error("El PDF no tiene el tamaño exacto solicitado.")

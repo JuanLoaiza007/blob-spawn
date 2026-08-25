@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { FILE_TYPES, GENERATOR_LIMITS, SIZE_UNITS, searchFileTypes } from "@/lib/generators/config"
 import { estimatePdf, generatePdf } from "@/lib/generators/pdf"
+import { DEFAULT_PDF_SECURITY, PDF_SECURITY_PASSWORDS, type PdfSecurityRestrictions } from "@/lib/generators/pdf-security"
 import { generateTextFile } from "@/lib/generators/text"
 import { sizeToBytes, validatePdfPageCount, validatePdfText, validateTargetSize } from "@/lib/generators/validation"
 
@@ -60,6 +61,7 @@ export default function Home() {
   const displayedSize = isPdf && pdfMode === "pages"
     ? pdfEstimate ? `${pdfEstimate.pageCount} páginas · ~${formatBytes(pdfEstimate.estimatedBytes)}` : "Estimación pendiente"
     : Number.isFinite(targetBytes) && targetBytes > 0 ? formatBytes(targetBytes) : "Tamaño pendiente"
+  const pdfSecurity = useMemo(() => getPdfSecurity(form.fields), [form.fields])
 
   useEffect(() => {
     function handleOutsidePointerDown(event: PointerEvent) {
@@ -78,15 +80,15 @@ export default function Home() {
 
     let cancelled = false
     const options = pdfMode === "size"
-      ? { mode: "size" as const, targetBytes, text: form.fields.pdfText ?? "" }
-      : { mode: "pages" as const, pageCount: Number(form.fields.pageCount), text: form.fields.pdfText ?? "" }
+      ? { mode: "size" as const, targetBytes, text: form.fields.pdfText ?? "", security: pdfSecurity }
+      : { mode: "pages" as const, pageCount: Number(form.fields.pageCount), text: form.fields.pdfText ?? "", security: pdfSecurity }
     void estimatePdf(options).then((estimate) => {
       if (!cancelled) setPdfEstimate(estimate)
     }).catch(() => {
       if (!cancelled) setPdfEstimate(null)
     })
     return () => { cancelled = true }
-  }, [form.fields.pageCount, form.fields.pdfText, isPdf, pdfMode, targetBytes])
+  }, [form.fields.pageCount, form.fields.pdfText, isPdf, pdfMode, targetBytes, pdfSecurity])
 
   function selectType(type: typeof initialType) {
     setSelectedType(type)
@@ -108,6 +110,7 @@ export default function Home() {
     if (selectedType.type === "pdf") {
       const mode = currentForm.fields.pdfMode
       if (mode !== "pages" && mode !== "size") return "Selecciona un modo de generación para el PDF."
+      if (mode === "size" && currentForm.fields.pdfSecurityEnabled === "true") return "La seguridad PDF aún no admite el modo de tamaño exacto."
       const textError = validatePdfText(currentForm.fields.pdfText ?? "")
       if (textError) return textError
       if (mode === "pages") return validatePdfPageCount(currentForm.fields.pageCount ?? "")
@@ -151,9 +154,9 @@ export default function Home() {
 
     try {
       const result = selectedType.type === "pdf"
-        ? await generatePdf(currentForm.fields.pdfMode === "size"
-          ? { mode: "size", targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit], text: currentForm.fields.pdfText ?? "" }
-          : { mode: "pages", pageCount: Number(currentForm.fields.pageCount), text: currentForm.fields.pdfText ?? "" })
+          ? await generatePdf(currentForm.fields.pdfMode === "size"
+          ? { mode: "size", targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit], text: currentForm.fields.pdfText ?? "", security: getPdfSecurity(currentForm.fields) }
+          : { mode: "pages", pageCount: Number(currentForm.fields.pageCount), text: currentForm.fields.pdfText ?? "", security: getPdfSecurity(currentForm.fields) })
         : generateTextFile(
             { type: selectedType.type, targetBytes: Number(currentForm.size) * SIZE_UNITS[currentForm.unit], ...currentForm.fields },
             selectedType,
@@ -327,8 +330,10 @@ export default function Home() {
                    </div>
                  </div>}
                  </div>
-               ))}
-            </div>
+                ))}
+             </div>
+
+             {isPdf && <PdfSecurityFields fields={form.fields} updateField={updateField} />}
 
             <div className="mt-8 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -384,5 +389,69 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </main>
+  )
+}
+
+function getPdfSecurity(fields: Record<string, string>) {
+  const restrictions: PdfSecurityRestrictions = {
+    printing: fields.pdfRestrictionPrinting === "true",
+    changingDocument: fields.pdfRestrictionChangingDocument === "true",
+    documentAssembly: fields.pdfRestrictionDocumentAssembly === "true",
+    contentCopying: fields.pdfRestrictionContentCopying === "true",
+    accessibilityExtraction: fields.pdfRestrictionAccessibilityExtraction === "true",
+    pageExtraction: fields.pdfRestrictionPageExtraction === "true",
+    commenting: fields.pdfRestrictionCommenting === "true",
+    formFilling: fields.pdfRestrictionFormFilling === "true",
+    signing: fields.pdfRestrictionSigning === "true",
+    templatePages: fields.pdfRestrictionTemplatePages === "true",
+  }
+  return { ...DEFAULT_PDF_SECURITY, enabled: fields.pdfSecurityEnabled === "true", restrictions }
+}
+
+const PDF_RESTRICTIONS = [
+  ["pdfRestrictionPrinting", "Impresión / Printing"],
+  ["pdfRestrictionChangingDocument", "Cambiar documento / Changing the document"],
+  ["pdfRestrictionDocumentAssembly", "Ensamblaje del documento / Document assembly"],
+  ["pdfRestrictionContentCopying", "Extracción o copia de contenido / Content copying or extraction"],
+  ["pdfRestrictionAccessibilityExtraction", "Extracción de contenido para accesibilidad / Content extraction for accessibility"],
+  ["pdfRestrictionPageExtraction", "Extracción de páginas / Page extraction"],
+  ["pdfRestrictionCommenting", "Comentando / Commenting"],
+  ["pdfRestrictionFormFilling", "Cumplimentar campos de formulario / Filling of form fields"],
+  ["pdfRestrictionSigning", "Firmar firmas digitales / Signing"],
+  ["pdfRestrictionTemplatePages", "Creación de páginas de plantilla / Creation of template pages"],
+] as const
+
+function PdfSecurityFields({ fields, updateField }: { fields: Record<string, string>; updateField: (name: string, value: string) => void }) {
+  const enabled = fields.pdfSecurityEnabled === "true"
+  return (
+    <div className="mt-8 space-y-4 border-t border-border/60 pt-6">
+      <div className="flex items-start gap-3">
+        <input id="pdfSecurityEnabled" type="checkbox" className="mt-0.5 size-4 accent-primary" checked={enabled} onChange={(event) => updateField("pdfSecurityEnabled", String(event.target.checked))} />
+        <div className="space-y-1">
+          <Label htmlFor="pdfSecurityEnabled">Aplicar restricciones de seguridad PDF</Label>
+          <p className="text-xs leading-5 text-muted-foreground">Desactivado por defecto. Las restricciones PDF dependen del lector y no son DRM.</p>
+        </div>
+      </div>
+      {enabled && <>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs leading-5 text-muted-foreground">
+          <p>Credenciales fijas para pruebas:</p>
+          <p className="font-mono text-foreground">Usuario: {PDF_SECURITY_PASSWORDS.user}</p>
+          <p className="font-mono text-foreground">Propietario: {PDF_SECURITY_PASSWORDS.owner}</p>
+          <p className="mt-2">Los checkboxes activados restringen la capacidad indicada. Accesibilidad, firmas, extracción de páginas y plantillas pueden depender del estándar y del lector.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {PDF_RESTRICTIONS.map(([name, label]) => {
+            const checked = fields[name] === "true"
+            return <label key={name} className="flex items-start gap-3 rounded-xl border border-border/60 p-3 text-sm leading-5">
+              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={checked} onChange={(event) => updateField(name, String(event.target.checked))} />
+              <span className="space-y-1">
+                <span className="block">{label}</span>
+                {name === "pdfRestrictionAccessibilityExtraction" && <span className="block text-xs font-normal leading-5 text-amber-700 dark:text-amber-300">Aviso: los PDFs modernos suelen permitir esta extracción aunque actives la restricción. No se puede garantizar su bloqueo.</span>}
+              </span>
+            </label>
+          })}
+        </div>
+      </>}
+    </div>
   )
 }
