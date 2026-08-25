@@ -26,4 +26,4 @@
 
 - [x] 4.1 Configurar Next.js para exportación estática y verificar que `npm run build` finalice sin APIs de servidor requeridas.
 - [x] 4.2 Añadir pruebas de integración o comprobaciones automatizadas para catálogo, validación, exactitud de bytes, parseo JSON, estructura CSV y nombre de archivo; verificar los escenarios definidos en `specs/text-file-generation/spec.md`.
-- [ ] 4.3 Ejecutar lint, build y una verificación manual en navegador con tamaños pequeños y un caso mayor de 500 MB; confirmar que el máximo configurable y el warning funcionen sin introducir llamadas de red.
+- [x] 4.3 Ejecutar lint, build y una verificación manual en navegador con tamaños pequeños y un caso mayor de 500 MB; confirmar que el máximo configurable y el warning funcionen sin introducir llamadas de red.
