@@ -51,18 +51,18 @@ Esto mantiene aislada la complejidad criptográfica y evita introducir condicion
 
 ### Spike obligatorio antes de fijar la dependencia
 
-La primera implementación debe probar qpdf WebAssembly como candidato principal. El spike debe demostrar que puede ejecutarse desde un bundle de navegador con `output: "export"`, aceptar bytes en memoria, aplicar contraseñas fijas y permisos, y devolver bytes sin depender de filesystem, Node.js o red.
+El spike evaluó qpdf WebAssembly y wrappers alternativos. Se fija `qpdf-run@0.2.1` como dependencia de producción: ofrece API `Uint8Array`, ejecución mediante Web Worker, limpieza de archivos temporales en MEMFS, tipos TypeScript y licencia MIT. Los binarios y worker se sirven desde `public/qpdf` para que la exportación estática resuelva sus URLs sin depender de APIs de Node.
 
-También debe producir una matriz de resultados para las revisiones PDF y lectores soportados. Si qpdf WASM no es viable por bundle, APIs o memoria, se evaluará otra librería WebAssembly que implemente el mismo estándar. No se adoptará una solución basada únicamente en manipular texto PDF ni se mantendrán varias dependencias redundantes en producción.
+El spike confirma ejecución desde el bundle del navegador con `output: "export"`, bytes en memoria, contraseñas fijas y todas las restricciones activadas. Se mantiene como pendiente la matriz manual con varios lectores y la medición detallada de memoria. No se adopta una solución basada únicamente en manipular texto PDF ni se mantienen dependencias PDF redundantes.
 
 ### Contrato visual y compilación de permisos
 
-La UI usará los diez checkboxes solicitados, todos inicialmente desactivados. Un compilador interno convertirá el conjunto visual a permisos estándar:
+La UI usará los diez checkboxes solicitados como restricciones activables, todos inicialmente desactivados. Un compilador interno convertirá el conjunto visual a permisos estándar, invirtiendo la selección: checkbox desactivado significa capacidad permitida y checkbox activado significa capacidad restringida:
 
-- Impresión se mapeará a ninguno, baja resolución o alta resolución según la capacidad de la librería; si la UI solo tiene booleano, activado significará permitir impresión y desactivado denegarla al nivel representable.
+- Impresión se mapeará a impresión denegada cuando el checkbox esté activado; si la herramienta permite niveles, se documentará la diferencia entre baja y alta resolución.
 - Cambio de documento, comentarios, formularios y ensamblaje se combinarán cuando compartan bits o reglas de revisión.
-- Copia general se mapeará al permiso de extracción de texto y gráficos.
-- Accesibilidad se marcará como no restringible en revisiones modernas y no se presentará como una garantía de bloqueo.
+- Copia general se mapeará al permiso de extracción de texto y gráficos y se denegará cuando el checkbox esté activado.
+- Accesibilidad se marcará como no restringible en revisiones modernas y mostrará un aviso inline junto al checkbox; no se presentará como una garantía de bloqueo aunque el checkbox esté activado.
 - Extracción de páginas, firmas y páginas de plantilla se tratarán como capacidades derivadas, normalmente relacionadas con extracción, modificación, formularios o ensamblaje.
 
 La configuración resultante debe conservar tanto el estado solicitado por la UI como las capacidades efectivamente emitidas, para que la verificación pueda detectar perfiles imposibles o degradaciones no documentadas.
@@ -77,7 +77,7 @@ La presencia de ambas contraseñas permite probar apertura restringida y adminis
 
 La seguridad se aplicará antes de la verificación final del tamaño. El algoritmo de tamaño exacto deberá medir el resultado protegido, incluyendo `/Encrypt`, identificadores, streams cifrados, xref y trailer. El padding solo podrá agregarse mediante una ruta que mantenga la validez y el cifrado del documento.
 
-Si el spike no demuestra que el motor puede alcanzar exactamente el target después del cifrado, la combinación `mode: "size"` y seguridad activa se rechazará con un error explícito. No se aplicará seguridad después de producir el target, porque eso cambia el tamaño y puede invalidar la promesa existente.
+El spike no demuestra que qpdf pueda alcanzar exactamente el target después del cifrado y del padding actual. Por tanto, la combinación `mode: "size"` y seguridad activa se rechaza actualmente con un error explícito. No se aplica seguridad después de producir el target, porque eso cambia el tamaño y puede invalidar la promesa existente.
 
 ### Verificación independiente del motor de generación
 
@@ -112,5 +112,5 @@ El rollback consiste en desactivar el perfil de seguridad y retirar el motor Web
 
 ## Open Questions
 
-- El spike debe fijar la revisión PDF y el algoritmo de cifrado que ofrezcan el mejor equilibrio entre compatibilidad y seguridad sin cambiar el contrato de la interfaz.
-- El spike debe determinar si la carga de qpdf puede ejecutarse directamente en el hilo principal o requiere obligatoriamente un Worker por el tamaño y tiempo de procesamiento.
+- La matriz manual con Acrobat y otro lector debe confirmar las diferencias aceptadas en permisos agrupados, accesibilidad, extracción de páginas, firmas y plantillas.
+- Una futura ampliación puede investigar padding compatible con cifrado para habilitar `mode: "size"` con seguridad sin degradar la exactitud.

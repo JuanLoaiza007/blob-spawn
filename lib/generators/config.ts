@@ -129,7 +129,22 @@ export const FILE_TYPES: GeneratorConfig[] = [
         description: "Texto plano, máximo 500 caracteres y 2.000 bytes UTF-8.",
       },
     ],
-    defaults: { pdfMode: "pages", pageCount: "1", pdfText: "BlobSpawn PDF test" },
+    defaults: {
+      pdfMode: "pages",
+      pageCount: "1",
+      pdfText: "BlobSpawn PDF test",
+      pdfSecurityEnabled: "false",
+      pdfRestrictionPrinting: "false",
+      pdfRestrictionChangingDocument: "false",
+      pdfRestrictionDocumentAssembly: "false",
+      pdfRestrictionContentCopying: "false",
+      pdfRestrictionAccessibilityExtraction: "false",
+      pdfRestrictionPageExtraction: "false",
+      pdfRestrictionCommenting: "false",
+      pdfRestrictionFormFilling: "false",
+      pdfRestrictionSigning: "false",
+      pdfRestrictionTemplatePages: "false",
+    },
   },
 ]
 
