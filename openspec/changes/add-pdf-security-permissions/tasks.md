@@ -34,12 +34,12 @@
 - [ ] 5.1 Probar si el motor puede cifrar y después alcanzar un tamaño exacto conservando xref, trailer, `/Encrypt` y contenido válido; verificar targets pequeños, medianos y próximos al límite de la aplicación.
 - [ ] 5.2 Integrar padding únicamente en una ruta compatible con cifrado y medir el Blob después del procesamiento completo; verificar que ningún ajuste posterior rompe la protección o el tamaño declarado.
 - [x] 5.3 Rechazar explícitamente la combinación de seguridad y modo `size` si el spike no demuestra exactitud; verificar mensaje accionable y ausencia de generación o descarga parcial.
-- [ ] 5.4 Implementar verificación postprocesado con el motor o herramienta PDF seleccionada, comprobando contraseña, permisos, número de páginas, imagen, texto, enlace, MIME y tamaño; verificar un caso válido y un caso corrupto.
+- [x] 5.4 Implementar verificación postprocesado con el motor o herramienta PDF seleccionada, comprobando contraseña, permisos, número de páginas, imagen, texto, enlace, MIME y tamaño; verificar un caso válido y un caso corrupto.
 
 ## 6. Pruebas Y Validación Final
 
 - [x] 6.1 Añadir pruebas unitarias de valores por defecto, compilación invertida de restricciones, contraseñas fijas, límites, relaciones entre capacidades y mensajes de capacidades no independientes; verificar cobertura de las diez opciones.
-- [ ] 6.2 Añadir pruebas de integración para abrir PDFs con `user-password` y `owner-password`, inspeccionar cifrado y permisos, y confirmar que la salida sin seguridad no contiene `/Encrypt`; verificar con qpdf u otra herramienta de referencia.
+- [x] 6.2 Añadir pruebas de integración para abrir PDFs con `user-password` y `owner-password`, inspeccionar cifrado y permisos, y confirmar que la salida sin seguridad no contiene `/Encrypt`; verificar con qpdf u otra herramienta de referencia.
 - [ ] 6.3 Verificar manualmente impresión, modificación, ensamblaje, copia, accesibilidad, extracción de páginas, comentarios, formularios, firma y páginas de plantilla en lectores representativos; registrar las diferencias aceptadas entre lectores.
 - [ ] 6.4 Verificar privacidad observando que una generación segura no realiza peticiones de red y que no se almacenan contraseñas ni bytes; cubrirlo con prueba automatizada o inspección de red del navegador.
 - [x] 6.5 Ejecutar `npm test`, `npm run lint` y `npm run build`; verificar que la exportación estática funciona, que el bundle WebAssembly cumple los límites acordados y que todos los generadores anteriores siguen pasando.
@@ -47,26 +47,26 @@
 
 ## 7. Trabajo Posterior: Pruebas De Integración Con Qpdf
 
-- [ ] 7.1 Definir un ejecutor de integración que genere o reciba un PDF protegido y ejecute qpdf nativo con rutas absolutas y argumentos controlados; verificar que la prueba pueda omitirse con un diagnóstico claro cuando qpdf no esté instalado.
-- [ ] 7.2 Crear siempre un directorio temporal aislado mediante una API de directorios temporales; verificar que ningún archivo de prueba se escriba en el repositorio, `public`, `tests`, `Downloads` o el directorio personal del usuario.
-- [ ] 7.3 Añadir casos para seguridad desactivada, cada restricción individual, todas las restricciones activadas y el perfil sin capacidades representables; verificar `R = 6`, AESv3 y los valores esperados de `P` (`-4`, `-2056`, `-12`, `-36`, `-20`, `-260`, `-1028` y `-3392`).
-- [ ] 7.4 Verificar apertura y descifrado con `user-password` y `owner-password`, además de detectar contraseñas incorrectas; verificar que no se impriman contraseñas ni contenido sensible en la salida de la prueba.
-- [ ] 7.5 Verificar páginas, imagen, texto, enlace fijo, MIME, `/Encrypt` y ausencia de `/Encrypt` en el caso sin seguridad; incluir un PDF corrupto y comprobar que la prueba falla de forma controlada.
-- [ ] 7.6 Comparar la matriz de qpdf con el comportamiento documentado de Nitro Pro sin convertir las etiquetas no independientes en requisitos contradictorios del Standard Security Handler; verificar y registrar las diferencias aceptadas.
+- [x] 7.1 Definir un ejecutor de integración que genere o reciba un PDF protegido y ejecute qpdf nativo con rutas absolutas y argumentos controlados; verificar que la prueba pueda omitirse con un diagnóstico claro cuando qpdf no esté instalado.
+- [x] 7.2 Crear siempre un directorio temporal aislado mediante una API de directorios temporales; verificar que ningún archivo de prueba se escriba en el repositorio, `public`, `tests`, `Downloads` o el directorio personal del usuario.
+- [x] 7.3 Añadir casos para seguridad desactivada, cada restricción individual, todas las restricciones activadas y el perfil sin capacidades representables; verificar `R = 6`, AESv3 y los valores esperados de `P` (`-4`, `-2056`, `-12`, `-36`, `-20`, `-260`, `-1028` y `-3392`).
+- [x] 7.4 Verificar apertura y descifrado con `user-password` y `owner-password`, además de detectar contraseñas incorrectas; verificar que no se impriman contraseñas ni contenido sensible en la salida de la prueba.
+- [x] 7.5 Verificar páginas, imagen, texto, enlace fijo, MIME, `/Encrypt` y ausencia de `/Encrypt` en el caso sin seguridad; incluir un PDF corrupto y comprobar que la prueba falla de forma controlada.
+- [x] 7.6 Comparar la matriz de qpdf con el comportamiento documentado de Nitro Pro sin convertir las etiquetas no independientes en requisitos contradictorios del Standard Security Handler; verificar y registrar las diferencias aceptadas.
 - [ ] 7.7 Aplicar límites de tiempo, tamaño, memoria y procesos hijos; verificar que los procesos se cierren y que la limpieza elimine únicamente el directorio temporal creado por la prueba, incluso cuando una aserción falle.
-- [ ] 7.8 Integrar la prueba en un comando explícito separado de `npm test` hasta confirmar su estabilidad en CI; verificar que la ausencia de qpdf o de un entorno de navegador no invalide silenciosamente una ejecución que se haya solicitado expresamente.
+- [x] 7.8 Integrar la prueba en un comando explícito separado de `npm test` hasta confirmar su estabilidad en CI; verificar que la ausencia de qpdf o de un entorno de navegador no invalide silenciosamente una ejecución que se haya solicitado expresamente.
 
 ### 7.9 Matriz De Permisos Individuales
 
-- [ ] 7.9.1 Probar **Impresión / Printing** activando únicamente su restricción; verificar `P = -2056`, impresión de baja resolución no permitida, impresión de alta resolución no permitida y extracción general permitida.
-- [ ] 7.9.2 Probar **Cambiar documento / Changing the document** activando únicamente su restricción; verificar `P = -12`, `modify other: not allowed` y que ensamblaje, formularios y anotaciones permanecen permitidos.
-- [ ] 7.9.3 Probar **Ensamblaje del documento / Document assembly** activando únicamente su restricción; verificar `P = -1028` y `modify document assembly: not allowed`.
-- [ ] 7.9.4 Probar **Extracción o copia de contenido / Content copying or extraction** activando únicamente su restricción; verificar `P = -20`, `extract for any purpose: not allowed` y extracción para accesibilidad permitida.
-- [ ] 7.9.5 Probar **Extracción de contenido para accesibilidad / Content extraction for accessibility** activando únicamente su restricción; verificar que `P` permanece en `-4`, la extracción para accesibilidad continúa permitida en `R = 6` y el resultado se registra como limitación esperada, no como fallo.
-- [ ] 7.9.6 Probar **Extracción de páginas / Page extraction** activando únicamente su restricción; verificar que se agrupa con ensamblaje y produce `P = -1028`, sin exigir un bit independiente inexistente.
-- [ ] 7.9.7 Probar **Comentando / Commenting** activando únicamente su restricción; verificar `P = -36` y `modify annotations: not allowed`.
-- [ ] 7.9.8 Probar **Cumplimentar campos de formulario / Filling of form fields** activando únicamente su restricción; verificar `P = -260` y `modify forms: not allowed`.
-- [ ] 7.9.9 Probar **Firmar firmas digitales / Signing** activando únicamente su restricción; verificar que se agrupa con formularios y produce `P = -260`, documentando que no existe un bit universal de firma independiente.
-- [ ] 7.9.10 Probar **Creación de páginas de plantilla / Creation of template pages** activando únicamente su restricción; verificar que se agrupa con ensamblaje y produce `P = -1028`, documentando que no existe un bit universal de plantillas independiente.
-- [ ] 7.9.11 Probar el perfil **sin permisos representables** activando las diez restricciones; verificar `P = -3392`, `R = 6`, AESv3 y que accesibilidad continúa permitida como excepción del estándar moderno.
-- [ ] 7.9.12 Repetir la matriz con seguridad activada pero sin restricciones seleccionadas; verificar que el documento conserva todas las capacidades representables y que el perfil base corresponde a `P = -4`.
+- [x] 7.9.1 Probar **Impresión / Printing** activando únicamente su restricción; verificar `P = -2056`, impresión de baja resolución no permitida, impresión de alta resolución no permitida y extracción general permitida.
+- [x] 7.9.2 Probar **Cambiar documento / Changing the document** activando únicamente su restricción; verificar `P = -12`, `modify other: not allowed` y que ensamblaje, formularios y anotaciones permanecen permitidos.
+- [x] 7.9.3 Probar **Ensamblaje del documento / Document assembly** activando únicamente su restricción; verificar `P = -1028` y `modify document assembly: not allowed`.
+- [x] 7.9.4 Probar **Extracción o copia de contenido / Content copying or extraction** activando únicamente su restricción; verificar `P = -20`, `extract for any purpose: not allowed` y extracción para accesibilidad permitida.
+- [x] 7.9.5 Probar **Extracción de contenido para accesibilidad / Content extraction for accessibility** activando únicamente su restricción; verificar que `P` permanece en `-4`, la extracción para accesibilidad continúa permitida en `R = 6` y el resultado se registra como limitación esperada, no como fallo.
+- [x] 7.9.6 Probar **Extracción de páginas / Page extraction** activando únicamente su restricción; verificar que se agrupa con ensamblaje y produce `P = -1028`, sin exigir un bit independiente inexistente.
+- [x] 7.9.7 Probar **Comentando / Commenting** activando únicamente su restricción; verificar `P = -36` y `modify annotations: not allowed`.
+- [x] 7.9.8 Probar **Cumplimentar campos de formulario / Filling of form fields** activando únicamente su restricción; verificar `P = -260` y `modify forms: not allowed`.
+- [x] 7.9.9 Probar **Firmar firmas digitales / Signing** activando únicamente su restricción; verificar que se agrupa con formularios y produce `P = -260`, documentando que no existe un bit universal de firma independiente.
+- [x] 7.9.10 Probar **Creación de páginas de plantilla / Creation of template pages** activando únicamente su restricción; verificar que se agrupa con ensamblaje y produce `P = -1028`, documentando que no existe un bit universal de plantillas independiente.
+- [x] 7.9.11 Probar el perfil **sin permisos representables** activando las diez restricciones; verificar `P = -3392`, `R = 6`, AESv3 y que accesibilidad continúa permitida como excepción del estándar moderno.
+- [x] 7.9.12 Repetir la matriz con seguridad activada pero sin restricciones seleccionadas; verificar que el documento conserva todas las capacidades representables y que el perfil base corresponde a `P = -4`.
