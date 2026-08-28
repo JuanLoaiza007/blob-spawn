@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, FileDown, Globe, Languages, ShieldCheck, Sparkles } from "lucide-react"
+import { Check, FileDown, Settings, ShieldCheck, Sparkles } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import { DEFAULT_PDF_SECURITY, PDF_SECURITY_PASSWORDS, type PdfSecurityRestricti
 import { generateTextFile } from "@/lib/generators/text"
 import { sizeToBytes, validatePdfPageCount, validatePdfText, validateTargetSize } from "@/lib/generators/validation"
 import { useI18n } from "@/lib/i18n"
+import { useTheme } from "@/lib/theme"
 
 type FormState = {
   size: string
@@ -59,6 +60,7 @@ function optionLabelKey(optionValue: string) {
 
 export default function Home() {
   const { t, locale, setLocale } = useI18n()
+  const { theme, setTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState(initialType)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -73,7 +75,7 @@ export default function Home() {
   const [message, setMessage] = useState("")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
-  const [isLangOpen, setIsLangOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [pdfEstimate, setPdfEstimate] = useState<{ estimatedBytes: number; pageCount: number } | null>(null)
 
   const formatLocale = locale === "es" ? "es-ES" : "en-US"
@@ -213,23 +215,12 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              className="h-auto gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              onClick={() => setIsPrivacyOpen(true)}
-              aria-label={t("header.localProcessingAria")}
-            >
-              <ShieldCheck className="size-4 text-primary" />
-              {t("header.localProcessing")}
-            </Button>
-            <Button
-              variant="ghost"
               size="icon"
-              className="size-9 rounded-full text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              onClick={() => setIsLangOpen(true)}
-              aria-label={locale === "es" ? "Switch to English" : "Cambiar a español"}
+              className="size-9 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              onClick={() => setIsSettingsOpen(true)}
+              aria-label={t("settings.buttonAria")}
             >
-              <Globe className="size-4" />
-              <span className="sr-only">{locale === "es" ? "EN" : "ES"}</span>
-              <span aria-hidden="true">{locale === "es" ? "EN" : "ES"}</span>
+              <Settings className="size-4" />
             </Button>
           </div>
         </header>
@@ -239,6 +230,18 @@ export default function Home() {
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-primary">{t("home.subtitle")}</p>
             <h1 className="max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">{t("home.headline")}</h1>
             <p className="max-w-lg text-base leading-7 text-muted-foreground">{t("home.description")}</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="h-auto gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              onClick={() => setIsPrivacyOpen(true)}
+              aria-label={t("badge.localProcessingAria")}
+            >
+              <ShieldCheck className="size-4 text-primary" />
+              {t("badge.localProcessing")}
+            </Button>
           </div>
 
           <div ref={searchContainerRef} className="relative overflow-visible p-0">
@@ -414,39 +417,34 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isLangOpen} onOpenChange={setIsLangOpen}>
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent overlayClassName="backdrop-blur-lg">
           <DialogHeader>
-            <DialogTitle>{locale === "es" ? "Seleccionar idioma" : "Select language"}</DialogTitle>
-            <DialogDescription>
-              {locale === "es" ? "Elige el idioma de la interfaz." : "Choose the interface language."}
-            </DialogDescription>
+            <DialogTitle>{t("settings.title")}</DialogTitle>
+            <DialogDescription>{t("settings.description")}</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <button
-              className="flex w-full items-center gap-3 rounded-2xl border border-border/60 p-4 text-left text-sm leading-5 transition-colors hover:bg-muted/60 aria-disabled:opacity-50"
-              onClick={() => { setLocale("es"); setIsLangOpen(false) }}
-              aria-disabled={locale === "es"}
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-mono text-base text-primary">ES</span>
-              <span className="flex flex-col">
-                <span className="font-medium">Español</span>
-                <span className="text-xs text-muted-foreground">Spanish</span>
-              </span>
-              {locale === "es" && <Check className="ml-auto size-5 text-primary" />}
-            </button>
-            <button
-              className="flex w-full items-center gap-3 rounded-2xl border border-border/60 p-4 text-left text-sm leading-5 transition-colors hover:bg-muted/60 aria-disabled:opacity-50"
-              onClick={() => { setLocale("en"); setIsLangOpen(false) }}
-              aria-disabled={locale === "en"}
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-mono text-base text-primary">EN</span>
-              <span className="flex flex-col">
-                <span className="font-medium">English</span>
-                <span className="text-xs text-muted-foreground">English</span>
-              </span>
-              {locale === "en" && <Check className="ml-auto size-5 text-primary" />}
-            </button>
+          <div className="flex flex-col gap-6">
+            <div className="space-y-2">
+              <Label>{t("settings.language")}</Label>
+              <Select value={locale} onValueChange={(value) => value && setLocale(value as "es" | "en")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("settings.themeLabel")}</Label>
+              <Select value={theme} onValueChange={(value) => value && setTheme(value as "dark" | "light" | "system")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dark">{t("settings.theme.dark")}</SelectItem>
+                  <SelectItem value="light">{t("settings.theme.light")}</SelectItem>
+                  <SelectItem value="system">{t("settings.theme.system")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
