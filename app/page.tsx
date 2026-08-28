@@ -91,12 +91,12 @@ export default function Home() {
       if (searchContainerRef.current?.contains(event.target as Node)) return
 
       setIsSearchOpen(false)
-      setSearchQuery(selectedType.displayName)
+      setSearchQuery("")
     }
 
     document.addEventListener("pointerdown", handleOutsidePointerDown)
     return () => document.removeEventListener("pointerdown", handleOutsidePointerDown)
-  }, [selectedType])
+  }, [])
 
   useEffect(() => {
     if (!isPdf) return
@@ -115,7 +115,7 @@ export default function Home() {
 
   function selectType(type: typeof initialType) {
     setSelectedType(type)
-    setSearchQuery(type.displayName)
+    setSearchQuery("")
     setIsSearchOpen(false)
     setForm((current) => ({ ...current, fields: { ...type.defaults } }))
     setMessage("")
@@ -257,7 +257,7 @@ export default function Home() {
             >
             <div className="relative">
               <CommandInput
-                className={!isSearchOpen && searchQuery === selectedType.displayName ? "pr-36 font-medium text-foreground" : undefined}
+                className={!isSearchOpen ? "pr-36 font-medium text-foreground" : undefined}
                 value={searchQuery}
                 onValueChange={(value) => {
                   setSearchQuery(value)
@@ -268,7 +268,7 @@ export default function Home() {
                 placeholder={t("search.placeholder")}
                 aria-label={t("search.placeholder")}
               />
-              {!isSearchOpen && searchQuery === selectedType.displayName && (
+              {!isSearchOpen && (
                 <span className="pointer-events-none absolute top-1/2 right-4 flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                   <Check className="size-3.5" />
                   {t("search.selected", { ext: selectedType.extension })}
