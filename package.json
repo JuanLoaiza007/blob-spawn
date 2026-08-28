@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npx serve@latest out",
     "lint": "eslint",
     "test": "vitest run",
     "test:pdf-security": "vitest run tests/pdf-security.integration.test.ts"
