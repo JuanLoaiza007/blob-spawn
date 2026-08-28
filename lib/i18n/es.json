@@ -1,0 +1,153 @@
+{
+  "header": {
+    "brand": "BLOBSPAWN",
+    "localProcessing": "Procesamiento local",
+    "localProcessingAria": "Cómo funciona el procesamiento local"
+  },
+  "home": {
+    "subtitle": "Generador de archivos de prueba",
+    "headline": "Prueba los límites. Sin subir nada.",
+    "description": "Configura un archivo de tamaño exacto y créalo directamente en tu navegador."
+  },
+  "search": {
+    "prompt": "¿Qué tipo de archivo quieres generar?",
+    "placeholder": "Busca .txt, JSON, Texto plano...",
+    "selected": "{ext} seleccionado",
+    "empty": "No hay tipos compatibles con esta búsqueda."
+  },
+  "form": {
+    "configTitle": "Configuración",
+    "exactSize": "Tamaño exacto",
+    "finalSize": "Tamaño final",
+    "sizeHelp": "Usamos MB decimales: 1 MB = 1.000.000 bytes. Por ejemplo, 10 MB pueden aparecer en Linux como aproximadamente 9,5 MiB.",
+    "sizeHelpShort": "Usamos MB decimales: 1 MB = 1.000.000 bytes.",
+    "unitLabel": "Unidad",
+    "filenameLabel": "Nombre del archivo",
+    "filenameHelp": "Solo letras, letras acentuadas, números, guion medio y guion bajo. La extensión se añade automáticamente.",
+    "estimatedPrefix": "Se generará",
+    "pendingEstimate": "Estimación pendiente",
+    "pendingSize": "Tamaño pendiente",
+    "pagesUnit": "páginas",
+    "charsCount": "{count}/{limit} caracteres",
+    "estimatedWithPages": "{count} páginas · ~{size}"
+  },
+  "button": {
+    "spawn": "Spawn",
+    "generating": "Generando...",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "alert": {
+    "successTitle": "Archivo listo",
+    "errorTitle": "No se pudo generar",
+    "processing": "Procesando",
+    "generated": "{filename} generado con {size} exactos{pageMessage}.",
+    "pageMessage": " y {count} páginas"
+  },
+  "limits": {
+    "title": "Límites activos",
+    "maxHelp": "Máximo configurable por la aplicación",
+    "features": {
+      "bytes": "Tamaño medido en bytes",
+      "utf8": "UTF-8 y estructuras válidas",
+      "noServer": "Sin peticiones al servidor"
+    }
+  },
+  "largeFileDialog": {
+    "title": "Archivo muy grande",
+    "description": "Generar archivos muy grandes (>500MB) puede consumir mucha memoria RAM y ralentizar tu navegador. ¿Estás seguro?"
+  },
+  "privacy": {
+    "title": "Procesamiento local",
+    "description": "BlobSpawn genera el archivo directamente en tu navegador usando los recursos de tu computador. La velocidad depende del rendimiento y la memoria disponibles en tu equipo. No subimos tus parámetros ni el archivo a ningún servidor; la descarga se crea desde un Blob temporal y se libera al terminar."
+  },
+  "security": {
+    "enableLabel": "Aplicar restricciones de seguridad PDF",
+    "enableHelp": "Desactivado por defecto. Las restricciones PDF dependen del lector y no son DRM.",
+    "credentialsTitle": "Credenciales fijas para pruebas:",
+    "user": "Usuario: {password}",
+    "owner": "Propietario: {password}",
+    "restrictionsHelp": "Los checkboxes activados restringen la capacidad indicada. Accesibilidad, firmas, extracción de páginas y plantillas pueden depender del estándar y del lector.",
+    "accessibilityWarning": "Aviso: los PDFs modernos suelen permitir esta extracción aunque actives la restricción. No se puede garantizar su bloqueo.",
+    "restrictions": {
+      "printing": "Impresión / Printing",
+      "changingDocument": "Cambiar documento / Changing the document",
+      "documentAssembly": "Ensamblaje del documento / Document assembly",
+      "contentCopying": "Extracción o copia de contenido / Content copying or extraction",
+      "accessibilityExtraction": "Extracción de contenido para accesibilidad / Content extraction for accessibility",
+      "pageExtraction": "Extracción de páginas / Page extraction",
+      "commenting": "Comentando / Commenting",
+      "formFilling": "Cumplimentar campos de formulario / Filling of form fields",
+      "signing": "Firmar firmas digitales / Signing",
+      "templatePages": "Creación de páginas de plantilla / Creation of template pages"
+    }
+  },
+  "types": {
+    "txt": {
+      "name": "Texto plano",
+      "fields": {
+        "contentSource": "Contenido",
+        "contentSourceDescription": null
+      }
+    },
+    "json": {
+      "name": "JSON",
+      "fields": {
+        "jsonKey": "Nombre del campo",
+        "jsonKeyDescription": "Se usará como una clave simple dentro del objeto generado."
+      }
+    },
+    "csv": {
+      "name": "CSV",
+      "fields": {
+        "csvHeader": "Encabezado",
+        "csvHeaderDescription": "Una columna ASCII. Las filas usarán el mismo número de campos."
+      }
+    },
+    "pdf": {
+      "name": "PDF",
+      "fields": {
+        "pdfMode": "Generar por",
+        "pageCount": "Cantidad de páginas",
+        "pageCountDescription": "Entre 1 y 1.000 páginas. Cada página contiene una imagen y texto.",
+        "pdfText": "Texto de prueba",
+        "pdfTextDescription": "Texto plano, máximo 500 caracteres y 2.000 bytes UTF-8."
+      }
+    }
+  },
+  "fieldOptions": {
+    "pdfModePages": "Cantidad de páginas",
+    "pdfModeSize": "Tamaño final",
+    "contentSourceLorem": "Lorem Ipsum",
+    "contentSourceSequence": "Secuencia ASCII"
+  },
+  "errors": {
+    "SELECT_MODE": "Selecciona un modo de generación para el PDF.",
+    "SECURITY_SIZE_INCOMPATIBLE": "La seguridad PDF aún no admite el modo de tamaño exacto.",
+    "INVALID_SIZE": "El tamaño no es válido.",
+    "INVALID_FILENAME": "El nombre solo puede contener letras, números, guion medio y guion bajo.",
+    "SIZE_POSITIVE": "Introduce un tamaño entero mayor que cero.",
+    "SIZE_RANGE": "El tamaño debe estar entre 1 KB y 2048 MB.",
+    "SIZE_MAX_EXCEEDED": "El tamaño supera el máximo permitido por la aplicación.",
+    "PAGE_POSITIVE": "Introduce una cantidad entera de páginas mayor que cero.",
+    "PAGE_MAX": "La cantidad máxima es de 1.000 páginas.",
+    "TEXT_EMPTY": "Introduce un texto de prueba.",
+    "TEXT_TOO_LONG": "El texto no puede superar 500 caracteres.",
+    "TEXT_TOO_MANY_BYTES": "El texto no puede superar 2.000 bytes UTF-8.",
+    "PDF_TOO_SMALL": "El tamaño solicitado es demasiado pequeño para un PDF válido con imagen y texto.",
+    "PDF_CANT_ADJUST": "No se pudo ajustar el PDF al tamaño solicitado.",
+    "PDF_CANT_PRODUCE": "No se pudo producir el tamaño exacto solicitado para el PDF.",
+    "PDF_INVALID_TARGET": "El tamaño final del PDF no es válido o supera el máximo permitido.",
+    "PDF_VERIFICATION_FAILED": "El PDF generado no pasó la verificación estructural.",
+    "PDF_SIZE_MISMATCH": "El PDF no tiene el tamaño exacto solicitado.",
+    "PDF_SECURITY_APPLY_FAILED": "No se pudieron aplicar las restricciones de seguridad PDF.",
+    "PDF_SECURITY_VERIFY_FAILED": "El PDF protegido no pudo verificarse con la contraseña de usuario.",
+    "TEXT_FILE_TOO_SMALL": "El tamaño solicitado es demasiado pequeño para la estructura del archivo.",
+    "TEXT_FILE_WRONG_GENERATOR": "Este tipo de archivo no usa el generador de texto.",
+    "TEXT_EXACT_SIZE_FAILED": "No se pudo producir el tamaño exacto solicitado.",
+    "GENERIC_GENERATION": "No se pudo generar el archivo.",
+    "PDF_SECURITY_ACCESSIBILITY_WARNING": "La extracción para accesibilidad no puede restringirse de forma fiable en PDFs modernos.",
+    "PDF_SECURITY_SHARED_CAPABILITIES_WARNING": "Algunas capacidades comparten permisos PDF y pueden variar según el lector.",
+    "PDF_SECURITY_NOT_DRM_WARNING": "Las restricciones PDF dependen del lector y no son un mecanismo DRM fuerte."
+  }
+}

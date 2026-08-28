@@ -1,4 +1,5 @@
 import type { FileType, GeneratorConfig } from "./config"
+import { AppError } from "./errors"
 
 export type TextGeneratorOptions = {
   type: FileType
@@ -35,7 +36,7 @@ function bytesWithAsciiField(prefix: string, suffix: string, targetBytes: number
   const fieldBytes = targetBytes - prefixBytes.length - suffixBytes.length
 
   if (fieldBytes < 0) {
-    throw new Error("El tamaño solicitado es demasiado pequeño para la estructura del archivo.")
+    throw new AppError("TEXT_FILE_TOO_SMALL")
   }
 
   const output = new Uint8Array(targetBytes)
@@ -69,7 +70,7 @@ function generateCsv(targetBytes: number, csvHeader: string) {
   const headerBytes = encoder.encode(header)
 
   if (targetBytes < headerBytes.length + 1) {
-    throw new Error("El tamaño solicitado es demasiado pequeño para la estructura CSV.")
+    throw new AppError("TEXT_FILE_TOO_SMALL")
   }
 
   const output = new Uint8Array(targetBytes)
@@ -100,13 +101,13 @@ export function generateTextFile(options: TextGeneratorOptions, config: Generato
       bytes = generateCsv(options.targetBytes, options.csvHeader ?? "data")
       break
     default:
-      throw new Error("Este tipo de archivo no usa el generador de texto.")
+      throw new AppError("TEXT_FILE_WRONG_GENERATOR")
   }
 
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: config.mimeType })
 
   if (blob.size !== options.targetBytes) {
-    throw new Error("No se pudo producir el tamaño exacto solicitado.")
+    throw new AppError("TEXT_EXACT_SIZE_FAILED")
   }
 
   return { blob, extension: config.extension, mimeType: config.mimeType }
