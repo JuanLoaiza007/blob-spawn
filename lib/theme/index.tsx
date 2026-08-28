@@ -8,6 +8,8 @@ const STORAGE_KEY = "blobspawn-theme"
 
 function detectTheme(): Theme {
   if (typeof window === "undefined") return "dark"
+  const init = (window as unknown as Record<string, unknown>).__BLOBSPAWN_INIT__ as { theme: Theme } | undefined
+  if (init?.theme) return init.theme
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored === "dark" || stored === "light" || stored === "system") return stored
@@ -47,9 +49,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.add("theme-transition")
-  }, [])
-
-  useEffect(() => {
     applyTheme(resolvedTheme)
   }, [resolvedTheme])
 
