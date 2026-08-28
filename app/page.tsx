@@ -427,7 +427,7 @@ export default function Home() {
             <div className="space-y-2">
               <Label>{t("settings.language")}</Label>
               <Select value={locale} onValueChange={(value) => value && setLocale(value as "es" | "en")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue>{locale === "en" ? "English" : "Español"}</SelectValue></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="es">Español</SelectItem>
@@ -437,7 +437,7 @@ export default function Home() {
             <div className="space-y-2">
               <Label>{t("settings.themeLabel")}</Label>
               <Select value={theme} onValueChange={(value) => value && setTheme(value as "dark" | "light" | "system")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue>{t("settings.theme." + theme)}</SelectValue></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dark">{t("settings.theme.dark")}</SelectItem>
                   <SelectItem value="light">{t("settings.theme.light")}</SelectItem>
