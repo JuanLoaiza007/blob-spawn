@@ -340,7 +340,7 @@ export default function Home() {
                    <Label htmlFor={field.name}>{t(fieldLabelKey(selectedType.type, field.name))}</Label>
                   {field.kind === "select" ? (
                     <Select value={form.fields[field.name]} onValueChange={(value) => value && updateField(field.name, value)}>
-                      <SelectTrigger id={field.name}><SelectValue /></SelectTrigger>
+                      <SelectTrigger id={field.name}><SelectValue>{t(optionLabelKey(form.fields[field.name]))}</SelectValue></SelectTrigger>
                       <SelectContent>{field.options.map((option) => <SelectItem key={option.value} value={option.value}>{t(optionLabelKey(option.value))}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : field.kind === "input" ? (
