@@ -1,3 +1,5 @@
+import { AppError } from "./errors"
+
 export const PDF_SECURITY_PASSWORDS = {
   owner: "owner-password",
   user: "user-password",
@@ -32,13 +34,6 @@ export const DEFAULT_PDF_SECURITY_RESTRICTIONS: PdfSecurityRestrictions = {
 export type PdfSecurityOptions = {
   enabled: boolean
   restrictions: PdfSecurityRestrictions
-}
-
-export class PdfSecurityError extends Error {
-  constructor(message: string, options?: { cause?: unknown }) {
-    super(message, options)
-    this.name = "PdfSecurityError"
-  }
 }
 
 export const DEFAULT_PDF_SECURITY: PdfSecurityOptions = {
@@ -80,12 +75,12 @@ export function getPdfSecurityArguments(restrictions: PdfSecurityRestrictions) {
 export function getPdfSecurityWarnings(restrictions: PdfSecurityRestrictions) {
   const warnings: string[] = []
   if (restrictions.accessibilityExtraction) {
-    warnings.push("La extracción para accesibilidad no puede restringirse de forma fiable en PDFs modernos.")
+    warnings.push("PDF_SECURITY_ACCESSIBILITY_WARNING")
   }
   if (restrictions.pageExtraction || restrictions.signing || restrictions.templatePages) {
-    warnings.push("Algunas capacidades comparten permisos PDF y pueden variar según el lector.")
+    warnings.push("PDF_SECURITY_SHARED_CAPABILITIES_WARNING")
   }
-  warnings.push("Las restricciones PDF dependen del lector y no son un mecanismo DRM fuerte.")
+  warnings.push("PDF_SECURITY_NOT_DRM_WARNING")
   return warnings
 }
 
@@ -114,7 +109,7 @@ export async function applyPdfSecurity(bytes: Uint8Array, restrictions: PdfSecur
         ],
       })
     } catch (error) {
-      throw new PdfSecurityError("No se pudieron aplicar las restricciones de seguridad PDF.", { cause: error })
+      throw new AppError("PDF_SECURITY_APPLY_FAILED")
     }
   } finally {
     await runner.destroy()
@@ -137,7 +132,7 @@ export async function decryptPdfForVerification(bytes: Uint8Array) {
         args: ["--password=" + PDF_SECURITY_PASSWORDS.user, "--decrypt", "--", "secured.pdf", "verified.pdf"],
       })
     } catch (error) {
-      throw new PdfSecurityError("El PDF protegido no pudo verificarse con la contraseña de usuario.", { cause: error })
+      throw new AppError("PDF_SECURITY_VERIFY_FAILED")
     }
   } finally {
     await runner.destroy()

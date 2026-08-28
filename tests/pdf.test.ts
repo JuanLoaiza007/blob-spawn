@@ -71,7 +71,7 @@ describe("PDF generator", () => {
   })
 
   it("rejects a target smaller than the structural PDF", async () => {
-    await expect(generatePdf({ mode: "size", targetBytes: 1_000, text: "demo" })).rejects.toThrow("demasiado pequeño")
+    await expect(generatePdf({ mode: "size", targetBytes: 1_000, text: "demo" })).rejects.toThrow("PDF_TOO_SMALL")
   })
 })
 
@@ -140,8 +140,8 @@ describe("PDF security configuration", () => {
       accessibilityExtraction: true,
       signing: true,
     })
-    expect(warnings).toContain("La extracción para accesibilidad no puede restringirse de forma fiable en PDFs modernos.")
-    expect(warnings).toContain("Algunas capacidades comparten permisos PDF y pueden variar según el lector.")
+    expect(warnings).toContain("PDF_SECURITY_ACCESSIBILITY_WARNING")
+    expect(warnings).toContain("PDF_SECURITY_SHARED_CAPABILITIES_WARNING")
   })
 
   it("rejects exact-size mode when security is enabled", async () => {
@@ -150,6 +150,6 @@ describe("PDF security configuration", () => {
       targetBytes: 10_000,
       text: "demo",
       security: { ...DEFAULT_PDF_SECURITY, enabled: true },
-    })).rejects.toThrow("tamaño exacto")
+    })).rejects.toThrow("SECURITY_SIZE_INCOMPATIBLE")
   })
 })

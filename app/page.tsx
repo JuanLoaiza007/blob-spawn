@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, FileDown, ShieldCheck, Sparkles } from "lucide-react"
+import { Check, FileDown, Globe, Languages, ShieldCheck, Sparkles } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -18,10 +18,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { FILE_TYPES, GENERATOR_LIMITS, SIZE_UNITS, searchFileTypes } from "@/lib/generators/config"
+import { AppError, isAppError } from "@/lib/generators/errors"
 import { estimatePdf, generatePdf } from "@/lib/generators/pdf"
 import { DEFAULT_PDF_SECURITY, PDF_SECURITY_PASSWORDS, type PdfSecurityRestrictions } from "@/lib/generators/pdf-security"
 import { generateTextFile } from "@/lib/generators/text"
 import { sizeToBytes, validatePdfPageCount, validatePdfText, validateTargetSize } from "@/lib/generators/validation"
+import { useI18n } from "@/lib/i18n"
 
 type FormState = {
   size: string
@@ -32,12 +34,31 @@ type FormState = {
 
 const initialType = FILE_TYPES[0]
 
-function formatBytes(bytes: number) {
-  if (bytes >= SIZE_UNITS.MB) return `${(bytes / SIZE_UNITS.MB).toLocaleString("es-ES")} MB`
-  return `${bytes.toLocaleString("es-ES")} bytes`
+function formatBytes(bytes: number, locale: string) {
+  if (bytes >= SIZE_UNITS.MB) return `${(bytes / SIZE_UNITS.MB).toLocaleString(locale)} MB`
+  return `${bytes.toLocaleString(locale)} bytes`
+}
+
+function fieldLabelKey(type: string, fieldName: string) {
+  return `types.${type}.fields.${fieldName}`
+}
+
+function fieldDescriptionKey(type: string, fieldName: string) {
+  return `types.${type}.fields.${fieldName}Description`
+}
+
+function optionLabelKey(optionValue: string) {
+  const map: Record<string, string> = {
+    pages: "fieldOptions.pdfModePages",
+    size: "fieldOptions.pdfModeSize",
+    lorem: "fieldOptions.contentSourceLorem",
+    sequence: "fieldOptions.contentSourceSequence",
+  }
+  return map[optionValue] ?? optionValue
 }
 
 export default function Home() {
+  const { t, locale, setLocale } = useI18n()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState(initialType)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -52,15 +73,17 @@ export default function Home() {
   const [message, setMessage] = useState("")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
+  const [isLangOpen, setIsLangOpen] = useState(false)
   const [pdfEstimate, setPdfEstimate] = useState<{ estimatedBytes: number; pageCount: number } | null>(null)
 
+  const formatLocale = locale === "es" ? "es-ES" : "en-US"
   const filteredTypes = useMemo(() => searchFileTypes(searchQuery), [searchQuery])
   const isPdf = selectedType.type === "pdf"
   const pdfMode = form.fields.pdfMode ?? "pages"
   const targetBytes = sizeToBytes(form.size, form.unit) ?? 0
   const displayedSize = isPdf && pdfMode === "pages"
-    ? pdfEstimate ? `${pdfEstimate.pageCount} páginas · ~${formatBytes(pdfEstimate.estimatedBytes)}` : "Estimación pendiente"
-    : Number.isFinite(targetBytes) && targetBytes > 0 ? formatBytes(targetBytes) : "Tamaño pendiente"
+    ? pdfEstimate ? t("form.estimatedWithPages", { count: String(pdfEstimate.pageCount), size: formatBytes(pdfEstimate.estimatedBytes, formatLocale) }) : t("form.pendingEstimate")
+    : Number.isFinite(targetBytes) && targetBytes > 0 ? formatBytes(targetBytes, formatLocale) : t("form.pendingSize")
   const pdfSecurity = useMemo(() => getPdfSecurity(form.fields), [form.fields])
 
   useEffect(() => {
@@ -68,12 +91,12 @@ export default function Home() {
       if (searchContainerRef.current?.contains(event.target as Node)) return
 
       setIsSearchOpen(false)
-      setSearchQuery(selectedType.displayName)
+      setSearchQuery("")
     }
 
     document.addEventListener("pointerdown", handleOutsidePointerDown)
     return () => document.removeEventListener("pointerdown", handleOutsidePointerDown)
-  }, [selectedType])
+  }, [])
 
   useEffect(() => {
     if (!isPdf) return
@@ -92,7 +115,7 @@ export default function Home() {
 
   function selectType(type: typeof initialType) {
     setSelectedType(type)
-    setSearchQuery(type.displayName)
+    setSearchQuery("")
     setIsSearchOpen(false)
     setForm((current) => ({ ...current, fields: { ...type.defaults } }))
     setMessage("")
@@ -109,8 +132,8 @@ export default function Home() {
   function validate(currentForm: FormState) {
     if (selectedType.type === "pdf") {
       const mode = currentForm.fields.pdfMode
-      if (mode !== "pages" && mode !== "size") return "Selecciona un modo de generación para el PDF."
-      if (mode === "size" && currentForm.fields.pdfSecurityEnabled === "true") return "La seguridad PDF aún no admite el modo de tamaño exacto."
+      if (mode !== "pages" && mode !== "size") return "SELECT_MODE"
+      if (mode === "size" && currentForm.fields.pdfSecurityEnabled === "true") return "SECURITY_SIZE_INCOMPATIBLE"
       const textError = validatePdfText(currentForm.fields.pdfText ?? "")
       if (textError) return textError
       if (mode === "pages") return validatePdfPageCount(currentForm.fields.pageCount ?? "")
@@ -121,9 +144,9 @@ export default function Home() {
     const filename = currentForm.filename.trim()
 
     const sizeError = validateTargetSize(currentForm.size, currentForm.unit)
-    if (sizeError || bytes === null) return sizeError ?? "El tamaño no es válido."
+    if (sizeError || bytes === null) return sizeError ?? "SIZE_POSITIVE"
     if (!filename || !/^[\p{L}\p{N}_-]+$/u.test(filename)) {
-      return "El nombre solo puede contener letras, números, guion medio y guion bajo."
+      return "INVALID_FILENAME"
     }
     return null
   }
@@ -132,7 +155,7 @@ export default function Home() {
     const error = validate(currentForm)
     if (error) {
       setStatus("error")
-      setMessage(error)
+      setMessage(t(`errors.${error}`))
       return
     }
 
@@ -168,11 +191,11 @@ export default function Home() {
       link.click()
       URL.revokeObjectURL(objectUrl)
       setStatus("success")
-      const pageMessage = selectedType.type === "pdf" && "pageCount" in result ? ` y ${result.pageCount} páginas` : ""
-      setMessage(`${link.download} generado con ${formatBytes(result.blob.size)} exactos${pageMessage}.`)
+      const pageMsg = selectedType.type === "pdf" && "pageCount" in result ? t("alert.pageMessage", { count: String(result.pageCount) }) : ""
+      setMessage(t("alert.generated", { filename: link.download, size: formatBytes(result.blob.size, formatLocale), pageMessage: pageMsg }))
     } catch (error) {
       setStatus("error")
-      setMessage(error instanceof Error ? error.message : "No se pudo generar el archivo.")
+      setMessage(isAppError(error) ? t(`errors.${error.code}`) : t("errors.GENERIC_GENERATION"))
     }
   }
 
@@ -185,29 +208,42 @@ export default function Home() {
             <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
               <Sparkles className="size-5" />
             </div>
-            <span className="font-mono text-sm font-semibold tracking-[0.2em]">BLOBSPAWN</span>
+            <span className="font-mono text-sm font-semibold tracking-[0.2em]">{t("header.brand")}</span>
           </div>
-          <Button
-            variant="ghost"
-            className="h-auto gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-            onClick={() => setIsPrivacyOpen(true)}
-            aria-label="Cómo funciona el procesamiento local"
-          >
-            <ShieldCheck className="size-4 text-primary" />
-            Procesamiento local
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="h-auto gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              onClick={() => setIsPrivacyOpen(true)}
+              aria-label={t("header.localProcessingAria")}
+            >
+              <ShieldCheck className="size-4 text-primary" />
+              {t("header.localProcessing")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 rounded-full text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              onClick={() => setIsLangOpen(true)}
+              aria-label={locale === "es" ? "Switch to English" : "Cambiar a español"}
+            >
+              <Globe className="size-4" />
+              <span className="sr-only">{locale === "es" ? "EN" : "ES"}</span>
+              <span aria-hidden="true">{locale === "es" ? "EN" : "ES"}</span>
+            </Button>
+          </div>
         </header>
 
         <section className="space-y-8">
           <div className="max-w-3xl space-y-5">
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-primary">Generador de archivos de prueba</p>
-            <h1 className="max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">Prueba los límites. Sin subir nada.</h1>
-            <p className="max-w-lg text-base leading-7 text-muted-foreground">Configura un archivo de tamaño exacto y créalo directamente en tu navegador.</p>
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-primary">{t("home.subtitle")}</p>
+            <h1 className="max-w-xl text-3xl font-semibold tracking-tight sm:text-5xl">{t("home.headline")}</h1>
+            <p className="max-w-lg text-base leading-7 text-muted-foreground">{t("home.description")}</p>
           </div>
 
           <div ref={searchContainerRef} className="relative overflow-visible p-0">
             <div className="mb-3 px-3 pt-2 text-base font-semibold text-foreground sm:text-lg">
-              ¿Qué tipo de archivo quieres generar?
+              {t("search.prompt")}
             </div>
             <Command
               className="relative h-auto overflow-visible rounded-none bg-transparent p-0 [&_[data-slot=input-group]]:border [&_[data-slot=input-group]]:border-primary/40 [&_[data-slot=input-group]]:bg-card [&_[data-slot=input-group]]:shadow-lg"
@@ -221,7 +257,7 @@ export default function Home() {
             >
             <div className="relative">
               <CommandInput
-                className={!isSearchOpen && searchQuery === selectedType.displayName ? "pr-36 font-medium text-foreground" : undefined}
+                className={!isSearchOpen ? "pr-36 font-medium text-foreground" : undefined}
                 value={searchQuery}
                 onValueChange={(value) => {
                   setSearchQuery(value)
@@ -229,24 +265,24 @@ export default function Home() {
                 }}
                 onPointerDown={() => setSearchQuery("")}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder="Busca .txt, JSON, Texto plano..."
-                aria-label="Buscar tipo de archivo"
+                placeholder={t("search.placeholder")}
+                aria-label={t("search.placeholder")}
               />
-              {!isSearchOpen && searchQuery === selectedType.displayName && (
+              {!isSearchOpen && (
                 <span className="pointer-events-none absolute top-1/2 right-4 flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                   <Check className="size-3.5" />
-                  {selectedType.extension} seleccionado
+                  {t("search.selected", { ext: selectedType.extension })}
                 </span>
               )}
             </div>
               {isSearchOpen && (
                 <CommandList className="absolute inset-x-0 top-14 z-30 mt-2 rounded-2xl border border-border/70 bg-popover pt-1 shadow-xl">
-                  <CommandEmpty>No hay tipos compatibles con esta búsqueda.</CommandEmpty>
+                  <CommandEmpty>{t("search.empty")}</CommandEmpty>
                   {filteredTypes.map((type) => (
                     <CommandItem key={type.type} value={type.type} onSelect={() => selectType(type)}>
                       <span className="flex size-8 items-center justify-center rounded-xl bg-primary/10 font-mono text-xs text-primary">{type.extension}</span>
                       <span className="flex flex-col">
-                        <span>{type.displayName}</span>
+                        <span>{t(`types.${type.type}.name`)}</span>
                         <span className="text-xs font-normal text-muted-foreground">{type.aliases[0]}</span>
                       </span>
                       {selectedType.type === type.type && <Check className="ml-auto size-4 text-primary" />}
@@ -262,22 +298,22 @@ export default function Home() {
           <div className="rounded-[2rem] border border-border/70 bg-card p-6 shadow-xl shadow-black/10 sm:p-8">
             <div className="mb-8 flex items-start justify-between gap-4">
               <div>
-                <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Configuración</p>
-                <h2 className="text-2xl font-semibold">{selectedType.displayName}</h2>
+                <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">{t("form.configTitle")}</p>
+                <h2 className="text-2xl font-semibold">{t(`types.${selectedType.type}.name`)}</h2>
               </div>
               <span className="rounded-full bg-primary/10 px-3 py-1 font-mono text-xs text-primary">{selectedType.extension}</span>
             </div>
 
               {!isPdf && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
                 <div className="space-y-2">
-                 <Label htmlFor="size">{isPdf ? "Tamaño final" : "Tamaño exacto"}</Label>
+                 <Label htmlFor="size">{t("form.exactSize")}</Label>
                 <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
                 <p className="text-xs leading-5 text-muted-foreground">
-                   Usamos MB decimales: 1 MB = 1.000.000 bytes. Por ejemplo, 10 MB pueden aparecer en Linux como aproximadamente 9,5 MiB.
+                   {t("form.sizeHelp")}
                 </p>
                 </div>
                 <div className="space-y-2 sm:min-w-32">
-                <Label>Unidad</Label>
+                <Label>{t("form.unitLabel")}</Label>
                     <Select value={form.unit} onValueChange={(value) => value && setForm({ ...form, unit: value as FormState["unit"] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -289,37 +325,37 @@ export default function Home() {
               </div>}
 
             <div className="mt-5 space-y-2">
-              <Label htmlFor="filename">Nombre del archivo</Label>
+              <Label htmlFor="filename">{t("form.filenameLabel")}</Label>
               <Input id="filename" value={form.filename} onChange={(event) => setForm({ ...form, filename: event.target.value.replace(/[^\p{L}\p{N}_-]/gu, "") })} />
-              <p className="text-xs text-muted-foreground">Solo letras, letras acentuadas, números, guion medio y guion bajo. La extensión se añade automáticamente.</p>
+              <p className="text-xs text-muted-foreground">{t("form.filenameHelp")}</p>
             </div>
 
               <div className="mt-5 space-y-5">
                {selectedType.fields.map((field) => (
                  <div key={field.name} className="contents">
                  {!(field.name === "pageCount" && pdfMode !== "pages") && <div className="space-y-2">
-                   <Label htmlFor={field.name}>{field.label}</Label>
+                   <Label htmlFor={field.name}>{t(fieldLabelKey(selectedType.type, field.name))}</Label>
                   {field.kind === "select" ? (
                     <Select value={form.fields[field.name]} onValueChange={(value) => value && updateField(field.name, value)}>
                       <SelectTrigger id={field.name}><SelectValue /></SelectTrigger>
-                      <SelectContent>{field.options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                      <SelectContent>{field.options.map((option) => <SelectItem key={option.value} value={option.value}>{t(optionLabelKey(option.value))}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : field.kind === "input" ? (
                     <Input id={field.name} type={field.inputType ?? "text"} value={form.fields[field.name]} onChange={(event) => updateField(field.name, event.target.value)} />
                   ) : (
                     <Textarea id={field.name} value={form.fields[field.name]} onChange={(event) => updateField(field.name, event.target.value)} />
                   )}
-                  {field.description && !(field.name === "pageCount" && pdfMode !== "pages") && <p className="text-xs text-muted-foreground">{field.description}</p>}
-                   {field.name === "pdfText" && <p className="text-right text-xs text-muted-foreground">{(form.fields.pdfText ?? "").length}/{GENERATOR_LIMITS.pdfMaxTextCharacters} caracteres</p>}
+                  {field.description && !(field.name === "pageCount" && pdfMode !== "pages") && <p className="text-xs text-muted-foreground">{t(fieldDescriptionKey(selectedType.type, field.name))}</p>}
+                   {field.name === "pdfText" && <p className="text-right text-xs text-muted-foreground">{t("form.charsCount", { count: String((form.fields.pdfText ?? "").length), limit: String(GENERATOR_LIMITS.pdfMaxTextCharacters) })}</p>}
                  </div>}
                  {isPdf && pdfMode === "size" && field.name === "pdfMode" && <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
                    <div className="space-y-2">
-                     <Label htmlFor="size">Tamaño final</Label>
+                     <Label htmlFor="size">{t("form.finalSize")}</Label>
                      <Input id="size" type="number" min="1" step="1" value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} />
-                     <p className="text-xs leading-5 text-muted-foreground">Usamos MB decimales: 1 MB = 1.000.000 bytes.</p>
+                     <p className="text-xs leading-5 text-muted-foreground">{t("form.sizeHelpShort")}</p>
                    </div>
                    <div className="space-y-2 sm:min-w-32">
-                     <Label>Unidad</Label>
+                     <Label>{t("form.unitLabel")}</Label>
                      <Select value={form.unit} onValueChange={(value) => value && setForm({ ...form, unit: value as FormState["unit"] })}>
                        <SelectTrigger><SelectValue /></SelectTrigger>
                        <SelectContent>
@@ -330,19 +366,19 @@ export default function Home() {
                    </div>
                  </div>}
                  </div>
-                ))}
+               ))}
              </div>
 
-             {isPdf && <PdfSecurityFields fields={form.fields} updateField={updateField} />}
+             {isPdf && <PdfSecurityFields fields={form.fields} updateField={updateField} t={t} />}
 
             <div className="mt-8 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Se generará</p>
+                <p className="text-xs text-muted-foreground">{t("form.estimatedPrefix")}</p>
                 <p className="font-mono text-sm font-medium">{displayedSize} · {form.filename || "blob"}{selectedType.extension}</p>
               </div>
               <Button size="lg" disabled={status === "generating"} onClick={() => startGeneration(form)}>
                 <FileDown />
-                {status === "generating" ? "Generando..." : "Spawn"}
+                {status === "generating" ? t("button.generating") : t("button.spawn")}
               </Button>
             </div>
           </div>
@@ -350,17 +386,17 @@ export default function Home() {
           <aside className="flex flex-col justify-between gap-5 rounded-[2rem] border border-border/70 bg-muted/30 p-6 sm:p-8">
             <div className="space-y-6">
               <div>
-                <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Límites activos</p>
+                <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">{t("limits.title")}</p>
                 <p className="text-3xl font-semibold">2 GB</p>
-                <p className="mt-1 text-sm text-muted-foreground">Máximo configurable por la aplicación</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("limits.maxHelp")}</p>
               </div>
               <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Tamaño medido en bytes</div>
-                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> UTF-8 y estructuras válidas</div>
-                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Sin peticiones al servidor</div>
+                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> {t("limits.features.bytes")}</div>
+                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> {t("limits.features.utf8")}</div>
+                <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> {t("limits.features.noServer")}</div>
               </div>
             </div>
-            {message && <Alert variant={status === "error" ? "destructive" : "default"}><AlertTitle>{status === "success" ? "Archivo listo" : status === "error" ? "No se pudo generar" : "Procesando"}</AlertTitle><AlertDescription>{message}</AlertDescription></Alert>}
+            {message && <Alert variant={status === "error" ? "destructive" : "default"}><AlertTitle>{status === "success" ? t("alert.successTitle") : status === "error" ? t("alert.errorTitle") : t("alert.processing")}</AlertTitle><AlertDescription>{message}</AlertDescription></Alert>}
           </aside>
         </section>
       </div>
@@ -368,22 +404,59 @@ export default function Home() {
       <Dialog open={largeFileConfig !== null} onOpenChange={(open) => !open && setLargeFileConfig(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Archivo muy grande</DialogTitle>
-            <DialogDescription>Generar archivos muy grandes (&gt;500MB) puede consumir mucha memoria RAM y ralentizar tu navegador. ¿Estás seguro?</DialogDescription>
+            <DialogTitle>{t("largeFileDialog.title")}</DialogTitle>
+            <DialogDescription>{t("largeFileDialog.description")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLargeFileConfig(null)}>Cancelar</Button>
-            <Button onClick={() => largeFileConfig && void download(largeFileConfig)}>Confirmar</Button>
+            <Button variant="outline" onClick={() => setLargeFileConfig(null)}>{t("button.cancel")}</Button>
+            <Button onClick={() => largeFileConfig && void download(largeFileConfig)}>{t("button.confirm")}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isLangOpen} onOpenChange={setIsLangOpen}>
+        <DialogContent overlayClassName="backdrop-blur-lg">
+          <DialogHeader>
+            <DialogTitle>{locale === "es" ? "Seleccionar idioma" : "Select language"}</DialogTitle>
+            <DialogDescription>
+              {locale === "es" ? "Elige el idioma de la interfaz." : "Choose the interface language."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <button
+              className="flex w-full items-center gap-3 rounded-2xl border border-border/60 p-4 text-left text-sm leading-5 transition-colors hover:bg-muted/60 aria-disabled:opacity-50"
+              onClick={() => { setLocale("es"); setIsLangOpen(false) }}
+              aria-disabled={locale === "es"}
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-mono text-base text-primary">ES</span>
+              <span className="flex flex-col">
+                <span className="font-medium">Español</span>
+                <span className="text-xs text-muted-foreground">Spanish</span>
+              </span>
+              {locale === "es" && <Check className="ml-auto size-5 text-primary" />}
+            </button>
+            <button
+              className="flex w-full items-center gap-3 rounded-2xl border border-border/60 p-4 text-left text-sm leading-5 transition-colors hover:bg-muted/60 aria-disabled:opacity-50"
+              onClick={() => { setLocale("en"); setIsLangOpen(false) }}
+              aria-disabled={locale === "en"}
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-mono text-base text-primary">EN</span>
+              <span className="flex flex-col">
+                <span className="font-medium">English</span>
+                <span className="text-xs text-muted-foreground">English</span>
+              </span>
+              {locale === "en" && <Check className="ml-auto size-5 text-primary" />}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isPrivacyOpen} onOpenChange={setIsPrivacyOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Procesamiento local</DialogTitle>
+            <DialogTitle>{t("privacy.title")}</DialogTitle>
             <DialogDescription>
-              BlobSpawn genera el archivo directamente en tu navegador usando los recursos de tu computador. La velocidad depende del rendimiento y la memoria disponibles en tu equipo. No subimos tus parámetros ni el archivo a ningún servidor; la descarga se crea desde un Blob temporal y se libera al terminar.
+              {t("privacy.description")}
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
@@ -408,45 +481,45 @@ function getPdfSecurity(fields: Record<string, string>) {
   return { ...DEFAULT_PDF_SECURITY, enabled: fields.pdfSecurityEnabled === "true", restrictions }
 }
 
-const PDF_RESTRICTIONS = [
-  ["pdfRestrictionPrinting", "Impresión / Printing"],
-  ["pdfRestrictionChangingDocument", "Cambiar documento / Changing the document"],
-  ["pdfRestrictionDocumentAssembly", "Ensamblaje del documento / Document assembly"],
-  ["pdfRestrictionContentCopying", "Extracción o copia de contenido / Content copying or extraction"],
-  ["pdfRestrictionAccessibilityExtraction", "Extracción de contenido para accesibilidad / Content extraction for accessibility"],
-  ["pdfRestrictionPageExtraction", "Extracción de páginas / Page extraction"],
-  ["pdfRestrictionCommenting", "Comentando / Commenting"],
-  ["pdfRestrictionFormFilling", "Cumplimentar campos de formulario / Filling of form fields"],
-  ["pdfRestrictionSigning", "Firmar firmas digitales / Signing"],
-  ["pdfRestrictionTemplatePages", "Creación de páginas de plantilla / Creation of template pages"],
+const PDF_RESTRICTION_KEYS = [
+  "printing",
+  "changingDocument",
+  "documentAssembly",
+  "contentCopying",
+  "accessibilityExtraction",
+  "pageExtraction",
+  "commenting",
+  "formFilling",
+  "signing",
+  "templatePages",
 ] as const
 
-function PdfSecurityFields({ fields, updateField }: { fields: Record<string, string>; updateField: (name: string, value: string) => void }) {
+function PdfSecurityFields({ fields, updateField, t }: { fields: Record<string, string>; updateField: (name: string, value: string) => void; t: (key: string, params?: Record<string, string>) => string }) {
   const enabled = fields.pdfSecurityEnabled === "true"
   return (
     <div className="mt-8 space-y-4 border-t border-border/60 pt-6">
       <div className="flex items-start gap-3">
         <input id="pdfSecurityEnabled" type="checkbox" className="mt-0.5 size-4 accent-primary" checked={enabled} onChange={(event) => updateField("pdfSecurityEnabled", String(event.target.checked))} />
         <div className="space-y-1">
-          <Label htmlFor="pdfSecurityEnabled">Aplicar restricciones de seguridad PDF</Label>
-          <p className="text-xs leading-5 text-muted-foreground">Desactivado por defecto. Las restricciones PDF dependen del lector y no son DRM.</p>
+          <Label htmlFor="pdfSecurityEnabled">{t("security.enableLabel")}</Label>
+          <p className="text-xs leading-5 text-muted-foreground">{t("security.enableHelp")}</p>
         </div>
       </div>
       {enabled && <>
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs leading-5 text-muted-foreground">
-          <p>Credenciales fijas para pruebas:</p>
-          <p className="font-mono text-foreground">Usuario: {PDF_SECURITY_PASSWORDS.user}</p>
-          <p className="font-mono text-foreground">Propietario: {PDF_SECURITY_PASSWORDS.owner}</p>
-          <p className="mt-2">Los checkboxes activados restringen la capacidad indicada. Accesibilidad, firmas, extracción de páginas y plantillas pueden depender del estándar y del lector.</p>
+          <p>{t("security.credentialsTitle")}</p>
+          <p className="font-mono text-foreground">{t("security.user", { password: PDF_SECURITY_PASSWORDS.user })}</p>
+          <p className="font-mono text-foreground">{t("security.owner", { password: PDF_SECURITY_PASSWORDS.owner })}</p>
+          <p className="mt-2">{t("security.restrictionsHelp")}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          {PDF_RESTRICTIONS.map(([name, label]) => {
-            const checked = fields[name] === "true"
+          {PDF_RESTRICTION_KEYS.map((name) => {
+            const checked = fields[`pdfRestriction${name.charAt(0).toUpperCase() + name.slice(1)}`] === "true"
             return <label key={name} className="flex items-start gap-3 rounded-xl border border-border/60 p-3 text-sm leading-5">
-              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={checked} onChange={(event) => updateField(name, String(event.target.checked))} />
+              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={checked} onChange={(event) => updateField(`pdfRestriction${name.charAt(0).toUpperCase() + name.slice(1)}`, String(event.target.checked))} />
               <span className="space-y-1">
-                <span className="block">{label}</span>
-                {name === "pdfRestrictionAccessibilityExtraction" && <span className="block text-xs font-normal leading-5 text-amber-700 dark:text-amber-300">Aviso: los PDFs modernos suelen permitir esta extracción aunque actives la restricción. No se puede garantizar su bloqueo.</span>}
+                <span className="block">{t(`security.restrictions.${name}`)}</span>
+                {name === "accessibilityExtraction" && <span className="block text-xs font-normal leading-5 text-amber-700 dark:text-amber-300">{t("security.accessibilityWarning")}</span>}
               </span>
             </label>
           })}

@@ -13,20 +13,20 @@ export function sizeToBytes(sizeValue: string, unit: SizeUnit) {
 
 export function validateTargetSize(sizeValue: string, unit: SizeUnit) {
   const bytes = sizeToBytes(sizeValue, unit)
-  if (bytes === null) return "Introduce un tamaño entero mayor que cero."
+  if (bytes === null) return "SIZE_POSITIVE"
   if (bytes < GENERATOR_LIMITS.minBytes || bytes > GENERATOR_LIMITS.maxInputBytes) {
-    return "El tamaño debe estar entre 1 KB y 2048 MB."
+    return "SIZE_RANGE"
   }
   if (bytes > GENERATOR_LIMITS.maxApplicationBytes) {
-    return "El tamaño supera el máximo permitido por la aplicación."
+    return "SIZE_MAX_EXCEEDED"
   }
   return null
 }
 
 export function validatePdfPageCount(value: string) {
   const pages = Number(value)
-  if (!Number.isInteger(pages) || pages < 1) return "Introduce una cantidad entera de páginas mayor que cero."
-  if (pages > GENERATOR_LIMITS.pdfMaxPages) return `La cantidad máxima es de ${GENERATOR_LIMITS.pdfMaxPages.toLocaleString("es-ES")} páginas.`
+  if (!Number.isInteger(pages) || pages < 1) return "PAGE_POSITIVE"
+  if (pages > GENERATOR_LIMITS.pdfMaxPages) return "PAGE_MAX"
   return null
 }
 
@@ -37,8 +37,8 @@ export function normalizePdfText(value: string) {
 export function validatePdfText(value: string) {
   const normalized = normalizePdfText(value)
   const bytes = new TextEncoder().encode(normalized).length
-  if (normalized.length > GENERATOR_LIMITS.pdfMaxTextCharacters) return `El texto no puede superar ${GENERATOR_LIMITS.pdfMaxTextCharacters} caracteres.`
-  if (bytes > GENERATOR_LIMITS.pdfMaxTextBytes) return `El texto no puede superar ${GENERATOR_LIMITS.pdfMaxTextBytes.toLocaleString("es-ES")} bytes UTF-8.`
-  if (!normalized.trim()) return "Introduce un texto de prueba."
+  if (normalized.length > GENERATOR_LIMITS.pdfMaxTextCharacters) return "TEXT_TOO_LONG"
+  if (bytes > GENERATOR_LIMITS.pdfMaxTextBytes) return "TEXT_TOO_MANY_BYTES"
+  if (!normalized.trim()) return "TEXT_EMPTY"
   return null
 }

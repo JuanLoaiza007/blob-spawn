@@ -2,6 +2,7 @@ import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib"
 
 import { GENERATOR_LIMITS, SIZE_UNITS } from "./config"
 import { createPdfTestImage } from "./pdf-image"
+import { AppError } from "./errors"
 import { applyPdfSecurity, decryptPdfForVerification, type PdfSecurityOptions } from "./pdf-security"
 import { normalizePdfText, validatePdfPageCount, validatePdfText } from "./validation"
 
@@ -41,7 +42,7 @@ function addSourceLink(pdf: PDFDocument, page: ReturnType<PDFDocument["addPage"]
 function ensureText(text: string) {
   const normalized = normalizePdfText(text)
   const error = validatePdfText(normalized)
-  if (error) throw new Error(error)
+  if (error) throw new AppError(error)
   return normalized
 }
 
@@ -69,7 +70,7 @@ async function serialize(pageCount: number, text: string, paddingBytes = 0) {
 
 async function exactSize(pageCount: number, text: string, targetBytes: number) {
   const base = await serialize(pageCount, text)
-  if (base.length > targetBytes) throw new Error("El tamaño solicitado es demasiado pequeño para un PDF válido con imagen y texto.")
+  if (base.length > targetBytes) throw new AppError("PDF_TOO_SMALL")
   if (base.length === targetBytes) return base
 
   let padding = targetBytes - base.length
@@ -77,9 +78,9 @@ async function exactSize(pageCount: number, text: string, targetBytes: number) {
     const bytes = await serialize(pageCount, text, padding)
     if (bytes.length === targetBytes) return bytes
     padding += targetBytes - bytes.length
-    if (padding < 0) throw new Error("No se pudo ajustar el PDF al tamaño solicitado.")
+    if (padding < 0) throw new AppError("PDF_CANT_ADJUST")
   }
-  throw new Error("No se pudo producir el tamaño exacto solicitado para el PDF.")
+  throw new AppError("PDF_CANT_PRODUCE")
 }
 
 async function estimateOnePage(text: string) {
@@ -97,14 +98,14 @@ export async function estimatePdf(options: PdfOptions) {
 export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   const text = ensureText(options.text)
   if (options.security?.enabled && options.mode === "size") {
-    throw new Error("La seguridad PDF aún no admite el modo de tamaño exacto.")
+    throw new AppError("SECURITY_SIZE_INCOMPATIBLE")
   }
   if (options.mode === "pages") {
     const pageError = validatePdfPageCount(String(options.pageCount))
-    if (pageError) throw new Error(pageError)
+    if (pageError) throw new AppError(pageError)
   }
   if (options.mode === "size" && (!Number.isSafeInteger(options.targetBytes) || options.targetBytes <= 0 || options.targetBytes > GENERATOR_LIMITS.maxApplicationBytes)) {
-    throw new Error("El tamaño final del PDF no es válido o supera el máximo permitido.")
+    throw new AppError("PDF_INVALID_TARGET")
   }
 
   let pageCount = options.mode === "pages" ? options.pageCount : (await estimatePdf(options)).pageCount
@@ -132,9 +133,9 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
     !verificationSource.includes(PDF_SOURCE_URL) ||
     (options.security?.enabled && !source.includes("/Encrypt"))
   ) {
-    throw new Error("El PDF generado no pasó la verificación estructural.")
+    throw new AppError("PDF_VERIFICATION_FAILED")
   }
-  if (options.mode === "size" && bytes.length !== options.targetBytes) throw new Error("El PDF no tiene el tamaño exacto solicitado.")
+  if (options.mode === "size" && bytes.length !== options.targetBytes) throw new AppError("PDF_SIZE_MISMATCH")
   return {
     blob: new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" }),
     extension: ".pdf",
