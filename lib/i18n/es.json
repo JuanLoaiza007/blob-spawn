@@ -1,6 +1,8 @@
 {
   "header": {
-    "brand": "BLOBSPAWN",
+    "brand": "BLOBSPAWN"
+  },
+  "badge": {
     "localProcessing": "Procesamiento local",
     "localProcessingAria": "Cómo funciona el procesamiento local"
   },
@@ -60,6 +62,18 @@
   "privacy": {
     "title": "Procesamiento local",
     "description": "BlobSpawn genera el archivo directamente en tu navegador usando los recursos de tu computador. La velocidad depende del rendimiento y la memoria disponibles en tu equipo. No subimos tus parámetros ni el archivo a ningún servidor; la descarga se crea desde un Blob temporal y se libera al terminar."
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Personaliza tu experiencia.",
+    "buttonAria": "Abrir configuración",
+    "language": "Idioma",
+    "themeLabel": "Tema",
+    "theme": {
+      "dark": "Oscuro",
+      "light": "Claro",
+      "system": "Sistema"
+    }
   },
   "security": {
     "enableLabel": "Aplicar restricciones de seguridad PDF",

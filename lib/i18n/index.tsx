@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { type Dictionary, type Locale, DEFAULT_LOCALE, getDictionary, isLocale, normalizeLocale } from "./dictionaries"
 
 type I18nContextValue = {
@@ -13,7 +13,6 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null)
 
 function detectLocale(): Locale {
-  if (typeof window === "undefined") return DEFAULT_LOCALE
   try {
     const stored = localStorage.getItem("blobspawn-locale")
     if (stored && isLocale(stored)) return stored
@@ -40,7 +39,15 @@ function interpolate(template: string, params?: Record<string, string>): string 
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(detectLocale)
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
+
+  useEffect(() => {
+    const detected = detectLocale()
+    if (detected !== DEFAULT_LOCALE) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLocaleState(detected)
+    }
+  }, [])
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next)
