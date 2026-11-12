@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local mcp package
+/packages/mcp/node_modules/
+/packages/mcp/dist/
+/packages/mcp/vendor/
+/packages/mcp/LICENSE
+/packages/mcp/*.tgz

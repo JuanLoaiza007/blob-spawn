@@ -1,0 +1,51 @@
+{
+  "name": "@juanloaiza/blob-spawn-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local MCP server for generating exact-size test files with BlobSpawn",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "blob-spawn-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "test-fixtures",
+    "pdf",
+    "blob-spawn"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuanLoaiza007/blob-spawn.git",
+    "directory": "packages/mcp"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "prebuild": "node scripts/sync-assets.mjs",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "pdf-lib": "^1.17.1",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8.5.0",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  }
+}

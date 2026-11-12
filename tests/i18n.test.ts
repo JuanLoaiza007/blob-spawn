@@ -24,6 +24,16 @@ describe("i18n dictionaries", () => {
     const en = getDictionary("en")
     expect(Object.keys(es.errors).sort()).toEqual(Object.keys(en.errors).sort())
   })
+
+  it("has identical nested keys between locales", () => {
+    const collect = (value: unknown, prefix = ""): string[] => {
+      if (value === null || typeof value !== "object") return [prefix]
+      return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
+        collect(child, prefix ? `${prefix}.${key}` : key),
+      )
+    }
+    expect(collect(getDictionary("es")).sort()).toEqual(collect(getDictionary("en")).sort())
+  })
 })
 
 describe("locale detection", () => {
