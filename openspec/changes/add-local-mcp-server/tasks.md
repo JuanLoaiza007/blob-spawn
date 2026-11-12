@@ -60,8 +60,8 @@
 - [x] 8.3 Verificar el tarball con `npm pack --dry-run` y una instalación desde el `.tgz` en un directorio temporal, comprobando que solo contiene `dist`, README y LICENSE.
 - [x] 8.4 Crear `.github/workflows/release-mcp.yml` que valida que el tag coincide con la versión, ejecuta typecheck y tests, construye el tarball, genera el SHA-256 y crea la GitHub Release, verificando el YAML con una ejecución local de los mismos comandos.
 - [x] 8.5 Centralizar la URL de release y el comando `npm exec --allow-remote=all` en `lib/mcp-distribution.ts`, actualizar `/mcp` y los README, y verificar con `tests/mcp-distribution.test.ts`.
-- [ ] 8.6 Hacer commit, push del tag `mcp-v0.1.0` y publicar la release, verificando que el asset responde 200 y que su SHA-256 coincide con el fichero `.sha256`.
-- [ ] 8.7 Instalar desde la URL pública de la release en un directorio temporal y completar `tools/list` y una generación, verificando que no se requiere login de npm.
+- [x] 8.6 Hacer commit, push del tag `mcp-v0.1.0` y publicar la release, verificando que el asset responde 200 y que su SHA-256 coincide con el fichero `.sha256`.
+- [x] 8.7 Instalar desde la URL pública de la release en un directorio temporal y completar `tools/list` y una generación, verificando que no se requiere login de npm.
 
 ## 9. Verificación de integración
 
