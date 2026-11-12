@@ -1,4 +1,5 @@
 import { AppError } from "./errors"
+import type { PdfSecurityBackend } from "./pdf-security-backend"
 
 export const PDF_SECURITY_PASSWORDS = {
   owner: "owner-password",
@@ -108,7 +109,7 @@ export async function applyPdfSecurity(bytes: Uint8Array, restrictions: PdfSecur
           "output.pdf",
         ],
       })
-    } catch (error) {
+    } catch {
       throw new AppError("PDF_SECURITY_APPLY_FAILED")
     }
   } finally {
@@ -131,10 +132,15 @@ export async function decryptPdfForVerification(bytes: Uint8Array) {
         outputName: "verified.pdf",
         args: ["--password=" + PDF_SECURITY_PASSWORDS.user, "--decrypt", "--", "secured.pdf", "verified.pdf"],
       })
-    } catch (error) {
+    } catch {
       throw new AppError("PDF_SECURITY_VERIFY_FAILED")
     }
   } finally {
     await runner.destroy()
   }
+}
+
+export const browserPdfSecurityBackend: PdfSecurityBackend = {
+  apply: applyPdfSecurity,
+  decrypt: decryptPdfForVerification,
 }

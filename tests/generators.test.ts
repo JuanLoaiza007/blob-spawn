@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { FILE_TYPES, TEXT_FILE_TYPES, getFilename, searchFileTypes } from "../lib/generators/config"
-import { generateTextFile } from "../lib/generators/text"
+import { generateTextFile, textChunks } from "../lib/generators/text"
 import { sizeToBytes, validateTargetSize } from "../lib/generators/validation"
 
 const encoder = new TextDecoder()
@@ -50,6 +50,7 @@ describe("text file generation", () => {
     )
 
     expect(result.blob.size).toBe(1_000)
+    expect(result.bytes.length).toBe(1_000)
     expect(result.mimeType).toBe(fileType.mimeType)
 
     const text = await readText(result.blob)
@@ -63,6 +64,31 @@ describe("text file generation", () => {
     }
     if (fileType.type === "txt") {
       expect(text.length).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe("streaming text chunks", () => {
+  it.each(TEXT_FILE_TYPES)("matches the full generator output for .$type at arbitrary chunk boundaries", (fileType) => {
+    for (const targetBytes of [1_000, 65_537]) {
+      const options = {
+        type: fileType.type,
+        targetBytes,
+        jsonKey: "data",
+        csvHeader: "data",
+        contentSource: "sequence",
+      }
+      const chunks = [...textChunks(options, 4_096)]
+      const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+      const streamed = new Uint8Array(total)
+      let offset = 0
+      for (const chunk of chunks) {
+        streamed.set(chunk, offset)
+        offset += chunk.length
+      }
+
+      expect(total).toBe(targetBytes)
+      expect(streamed).toEqual(generateTextFile(options, fileType).bytes)
     }
   })
 })

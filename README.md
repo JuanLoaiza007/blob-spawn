@@ -23,8 +23,30 @@ Supports **TXT**, **JSON**, **CSV**, and **PDF** (with raster image, custom text
 - Optional AES-256 encryption (via qpdf), fixed test passwords, and 10 configurable restrictions
 - Large file confirmation (> 500 MB)
 - Internationalization: Spanish and English with automatic browser detection and manual selector
+- Local MCP server for AI agents: `@juanloaiza/blob-spawn-mcp` generates and writes fixtures on your machine without Vercel functions
 
 **Disclaimer:** This is a hobby project that started as a personal tool. It is free to use but comes with no official support, no warranty, and no service-level commitments. Use at your own discretion.
+
+---
+
+## MCP server
+
+BlobSpawn also ships a local MCP server so AI agents can create fixtures directly on your computer. It reuses the same generators, writes files to an explicit directory, and never sends content to a server. The web deployment remains a static export.
+
+The server is distributed as a GitHub Release tarball, not through the npm registry:
+
+```bash
+npm exec --yes --allow-remote=all \
+  --package=https://github.com/JuanLoaiza007/blob-spawn/releases/download/mcp-v0.1.0/blob-spawn-mcp-0.1.0.tgz \
+  -- blob-spawn-mcp --output-dir /absolute/path/to/fixtures
+```
+
+Tools: `list_file_types`, `generate_text_file`, `estimate_pdf`, `generate_pdf_file`.
+
+Configuration examples for Claude Desktop, Cursor, OpenCode, and VS Code are available at [`/mcp`](https://blob-spawn.vercel.app/mcp) and in [`packages/mcp/README.md`](packages/mcp/README.md).
+
+The MCP package is not installed or executed by Vercel. The static site only documents it.
+
 
 ---
 

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/mcp/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Test web and core
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Install MCP dependencies
+        working-directory: packages/mcp
+        run: npm ci
+
+      - name: Typecheck MCP server
+        working-directory: packages/mcp
+        run: npm run typecheck
+
+      - name: Test MCP server
+        working-directory: packages/mcp
+        run: npm test
+
+      - name: Verify package contents
+        working-directory: packages/mcp
+        run: npm pack --dry-run

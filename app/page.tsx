@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, FileDown, Settings, ShieldCheck, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { Check, FileDown, Settings, ShieldCheck, Sparkles, Terminal } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -18,13 +19,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { FILE_TYPES, GENERATOR_LIMITS, SIZE_UNITS, searchFileTypes } from "@/lib/generators/config"
-import { AppError, isAppError } from "@/lib/generators/errors"
+import { isAppError } from "@/lib/generators/errors"
 import { estimatePdf, generatePdf } from "@/lib/generators/pdf"
 import { DEFAULT_PDF_SECURITY, PDF_SECURITY_PASSWORDS, type PdfSecurityRestrictions } from "@/lib/generators/pdf-security"
 import { generateTextFile } from "@/lib/generators/text"
 import { sizeToBytes, validatePdfPageCount, validatePdfText, validateTargetSize } from "@/lib/generators/validation"
 import { useI18n } from "@/lib/i18n"
 import { useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
 
 type FormState = {
   size: string
@@ -213,6 +215,13 @@ export default function Home() {
             <span className="font-mono text-sm font-semibold tracking-[0.2em]">{t("header.brand")}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/mcp"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 text-muted-foreground")}
+            >
+              <Terminal className="size-4" />
+              {t("mcp.nav")}
+            </Link>
             <Button
               variant="ghost"
               size="icon"

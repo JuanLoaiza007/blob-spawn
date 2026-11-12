@@ -163,5 +163,40 @@
     "PDF_SECURITY_ACCESSIBILITY_WARNING": "Accessibility extraction cannot be reliably restricted in modern PDFs.",
     "PDF_SECURITY_SHARED_CAPABILITIES_WARNING": "Some capabilities share PDF permissions and may vary by reader.",
     "PDF_SECURITY_NOT_DRM_WARNING": "PDF restrictions depend on the reader and are not a strong DRM mechanism."
+  },
+  "mcp": {
+    "nav": "Local MCP",
+    "back": "Back to the generator",
+    "subtitle": "Local MCP server",
+    "headline": "Generate fixtures from your AI, on your machine.",
+    "description": "BlobSpawn exposes its generators as MCP tools. The AI client runs them on your computer and writes files where you decide. The web app stays static.",
+    "privacy": "The package sends no content, configuration, or files to any server. Vercel only serves this page.",
+    "installTitle": "Installation",
+    "installHelp": "Requires Node.js 20 or later and npm 12. No global install or npm account needed. The command includes --allow-remote=all to allow the release tarball.",
+    "configTitle": "Client configuration",
+    "configHelp": "Pick your client, enter an absolute directory, and copy the configuration.",
+    "outputDir": "Output directory",
+    "outputDirPlaceholder": "/home/your-user/fixtures",
+    "client": "Client",
+    "copy": "Copy configuration",
+    "copied": "Copied",
+    "toolsTitle": "Tools",
+    "tools": {
+      "list": "Lists types, fields, limits, and encryption status.",
+      "text": "Generates TXT, JSON, or CSV with an exact byte size.",
+      "estimate": "Estimates PDF pages and bytes without writing anything.",
+      "pdf": "Generates PDFs by page count or exact final size."
+    },
+    "limitsTitle": "Limits and behavior",
+    "limits": {
+      "text": "Text: 1 KB to 2 GB per file.",
+      "pdf": "PDF: up to 1,000 pages; final size depends on memory.",
+      "security": "Optional PDF encryption with qpdf WebAssembly and fixed test passwords.",
+      "overwrite": "Never overwrites an existing file unless the tool explicitly asks.",
+      "paths": "Every write is confined to the configured directory."
+    },
+    "clientsTitle": "Supported clients",
+    "clients": "Claude Desktop, Cursor, OpenCode, and VS Code. Any stdio MCP client works.",
+    "warning": "Files are created on your disk. Check the directory before pointing it at an important folder."
   }
 }

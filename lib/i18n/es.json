@@ -163,5 +163,40 @@
     "PDF_SECURITY_ACCESSIBILITY_WARNING": "La extracción para accesibilidad no puede restringirse de forma fiable en PDFs modernos.",
     "PDF_SECURITY_SHARED_CAPABILITIES_WARNING": "Algunas capacidades comparten permisos PDF y pueden variar según el lector.",
     "PDF_SECURITY_NOT_DRM_WARNING": "Las restricciones PDF dependen del lector y no son un mecanismo DRM fuerte."
+  },
+  "mcp": {
+    "nav": "MCP local",
+    "back": "Volver al generador",
+    "subtitle": "Servidor MCP local",
+    "headline": "Genera fixtures desde tu IA, en tu máquina.",
+    "description": "BlobSpawn expone sus generadores como herramientas MCP. El cliente de IA las ejecuta en tu equipo y escribe los archivos donde tú decidas. La web sigue siendo estática.",
+    "privacy": "El paquete no envía contenido, configuración ni archivos a ningún servidor. Vercel solo sirve esta página.",
+    "installTitle": "Instalación",
+    "installHelp": "Requiere Node.js 20 o superior y npm 12. No hace falta instalación global ni cuenta npm. El comando incluye --allow-remote=all para permitir el tarball de la release.",
+    "configTitle": "Configuración del cliente",
+    "configHelp": "Elige tu cliente, indica un directorio absoluto y copia la configuración.",
+    "outputDir": "Directorio de salida",
+    "outputDirPlaceholder": "/home/tu-usuario/fixtures",
+    "client": "Cliente",
+    "copy": "Copiar configuración",
+    "copied": "Copiado",
+    "toolsTitle": "Herramientas",
+    "tools": {
+      "list": "Lista tipos, campos, límites y estado del cifrado.",
+      "text": "Genera TXT, JSON o CSV con tamaño exacto en bytes.",
+      "estimate": "Estima páginas y bytes de un PDF sin escribir nada.",
+      "pdf": "Genera PDF por páginas o por tamaño final exacto."
+    },
+    "limitsTitle": "Límites y comportamiento",
+    "limits": {
+      "text": "Texto: 1 KB a 2 GB por archivo.",
+      "pdf": "PDF: hasta 1.000 páginas; el tamaño final depende de la memoria.",
+      "security": "Cifrado PDF opcional con qpdf WebAssembly y contraseñas de prueba fijas.",
+      "overwrite": "Nunca sobrescribe un archivo existente salvo que la herramienta lo pida.",
+      "paths": "Toda escritura queda confinada al directorio configurado."
+    },
+    "clientsTitle": "Clientes compatibles",
+    "clients": "Claude Desktop, Cursor, OpenCode y VS Code. Cualquier cliente con MCP por stdio sirve.",
+    "warning": "Los archivos se crean en tu disco. Revisa el directorio antes de apuntar a una carpeta importante."
   }
 }

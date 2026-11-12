@@ -3,7 +3,8 @@ import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib"
 import { GENERATOR_LIMITS, SIZE_UNITS } from "./config"
 import { createPdfTestImage } from "./pdf-image"
 import { AppError } from "./errors"
-import { applyPdfSecurity, decryptPdfForVerification, type PdfSecurityOptions } from "./pdf-security"
+import { type PdfSecurityOptions } from "./pdf-security"
+import type { PdfSecurityBackend } from "./pdf-security-backend"
 import { normalizePdfText, validatePdfPageCount, validatePdfText } from "./validation"
 
 export type PdfOptions =
@@ -11,6 +12,7 @@ export type PdfOptions =
   | { mode: "size"; targetBytes: number; text: string; security?: PdfSecurityOptions }
 
 export type PdfResult = {
+  bytes: Uint8Array
   blob: Blob
   extension: ".pdf"
   mimeType: "application/pdf"
@@ -95,7 +97,7 @@ export async function estimatePdf(options: PdfOptions) {
   return { estimatedBytes: options.targetBytes, pageCount: Math.max(1, Math.min(GENERATOR_LIMITS.pdfMaxPages, Math.floor(options.targetBytes / onePage))) }
 }
 
-export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
+export async function generatePdf(options: PdfOptions, backend?: PdfSecurityBackend): Promise<PdfResult> {
   const text = ensureText(options.text)
   if (options.security?.enabled && options.mode === "size") {
     throw new AppError("SECURITY_SIZE_INCOMPATIBLE")
@@ -108,11 +110,15 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
     throw new AppError("PDF_INVALID_TARGET")
   }
 
+  const securityBackend = options.security?.enabled
+    ? backend ?? (await import("./pdf-security")).browserPdfSecurityBackend
+    : undefined
+
   let pageCount = options.mode === "pages" ? options.pageCount : (await estimatePdf(options)).pageCount
   let bytes: Uint8Array
   if (options.mode === "pages") {
     bytes = await serialize(pageCount, text)
-    if (options.security?.enabled) bytes = await applyPdfSecurity(bytes, options.security.restrictions)
+    if (options.security?.enabled && securityBackend) bytes = await securityBackend.apply(bytes, options.security.restrictions)
   } else {
     while (pageCount > 1) {
       const base = await serialize(pageCount, text)
@@ -123,7 +129,7 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   }
 
   const source = new TextDecoder().decode(bytes)
-  const verificationBytes = options.security?.enabled ? await decryptPdfForVerification(bytes) : bytes
+  const verificationBytes = options.security?.enabled && securityBackend ? await securityBackend.decrypt(bytes) : bytes
   const verificationSource = new TextDecoder().decode(verificationBytes)
   const loaded = await PDFDocument.load(verificationBytes)
   if (
@@ -137,6 +143,7 @@ export async function generatePdf(options: PdfOptions): Promise<PdfResult> {
   }
   if (options.mode === "size" && bytes.length !== options.targetBytes) throw new AppError("PDF_SIZE_MISMATCH")
   return {
+    bytes,
     blob: new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" }),
     extension: ".pdf",
     mimeType: "application/pdf",
